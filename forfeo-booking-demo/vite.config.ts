@@ -9,14 +9,14 @@ import { vitePluginManusRuntime } from "vite-plugin-manus-runtime";
 const plugins = [react(), tailwindcss(), jsxLocPlugin(), vitePluginManusRuntime()];
 
 export default defineConfig({
-  // 👇 SECTION CRITIQUE : ON GRAVE LES VALEURS DANS LE MARBRE
+  // 👇 C'EST ICI QUE LA MAGIE OPÈRE : ON FORCE LES ADRESSES
   define: {
     "process.env.OAUTH_SERVER_URL": JSON.stringify("https://forfeo-booking-platform-production.up.railway.app"),
     "process.env.BUILT_IN_FORGE_API_URL": JSON.stringify("https://api.forfeo.com"),
     "process.env.OWNER_OPEN_ID": JSON.stringify("admin-forfeo"),
     "process.env.VITE_APP_ID": JSON.stringify("forfeo-booking-app"),
     "process.env.NODE_ENV": JSON.stringify("production"),
-    // On définit TOUT pour éviter qu'une variable vide ne fasse planter
+    // Sécurité pour éviter les crashs sur les variables optionnelles
     "process.env.BUILT_IN_FORGE_API_KEY": JSON.stringify(""),
     "process.env.JWT_SECRET": JSON.stringify("ignore-me-frontend"),
     "process.env.DATABASE_URL": JSON.stringify("ignore-me-frontend"),
@@ -39,9 +39,9 @@ export default defineConfig({
   },
   server: {
     host: true,
-    allowedHosts: ["all"], // On autorise tout pour éviter les blocages
+    allowedHosts: ["all"], 
     fs: {
-      strict: false, // On relâche la sécurité fichier pour le debug
+      strict: false,
     },
   },
 });
