@@ -9,17 +9,17 @@ import { vitePluginManusRuntime } from "vite-plugin-manus-runtime";
 const plugins = [react(), tailwindcss(), jsxLocPlugin(), vitePluginManusRuntime()];
 
 export default defineConfig({
-  // 👇 ICI : ON FORCE TOUTES LES VARIABLES EN DUR (HARDCODE)
-  // C'est ça qui va empêcher l'erreur "Invalid URL"
+  // 👇 SECTION CRITIQUE : ON GRAVE LES VALEURS DANS LE MARBRE
   define: {
     "process.env.OAUTH_SERVER_URL": JSON.stringify("https://forfeo-booking-platform-production.up.railway.app"),
     "process.env.BUILT_IN_FORGE_API_URL": JSON.stringify("https://api.forfeo.com"),
     "process.env.OWNER_OPEN_ID": JSON.stringify("admin-forfeo"),
     "process.env.VITE_APP_ID": JSON.stringify("forfeo-booking-app"),
     "process.env.NODE_ENV": JSON.stringify("production"),
-    // On met aussi celles-ci par sécurité pour éviter que ça plante si elles manquent
+    // On définit TOUT pour éviter qu'une variable vide ne fasse planter
     "process.env.BUILT_IN_FORGE_API_KEY": JSON.stringify(""),
-    "process.env.JWT_SECRET": JSON.stringify("default-secret"), 
+    "process.env.JWT_SECRET": JSON.stringify("ignore-me-frontend"),
+    "process.env.DATABASE_URL": JSON.stringify("ignore-me-frontend"),
   },
 
   plugins,
@@ -39,19 +39,9 @@ export default defineConfig({
   },
   server: {
     host: true,
-    allowedHosts: [
-      ".manuspre.computer",
-      ".manus.computer",
-      ".manus-asia.computer",
-      ".manuscomputer.ai",
-      ".manusvm.computer",
-      "localhost",
-      "127.0.0.1",
-      "forfeo-booking-platform-production.up.railway.app"
-    ],
+    allowedHosts: ["all"], // On autorise tout pour éviter les blocages
     fs: {
-      strict: true,
-      deny: ["**/.*"],
+      strict: false, // On relâche la sécurité fichier pour le debug
     },
   },
 });
