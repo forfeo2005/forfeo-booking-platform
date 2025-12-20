@@ -9,12 +9,17 @@ import { vitePluginManusRuntime } from "vite-plugin-manus-runtime";
 const plugins = [react(), tailwindcss(), jsxLocPlugin(), vitePluginManusRuntime()];
 
 export default defineConfig({
-  // 👇 ICI, ON ÉCRIT LES VALEURS EN DUR. PLUS DE "PROCESS.ENV" VIDE.
+  // 👇 ICI : ON FORCE TOUTES LES VARIABLES EN DUR (HARDCODE)
+  // C'est ça qui va empêcher l'erreur "Invalid URL"
   define: {
     "process.env.OAUTH_SERVER_URL": JSON.stringify("https://forfeo-booking-platform-production.up.railway.app"),
     "process.env.BUILT_IN_FORGE_API_URL": JSON.stringify("https://api.forfeo.com"),
     "process.env.OWNER_OPEN_ID": JSON.stringify("admin-forfeo"),
     "process.env.VITE_APP_ID": JSON.stringify("forfeo-booking-app"),
+    "process.env.NODE_ENV": JSON.stringify("production"),
+    // On met aussi celles-ci par sécurité pour éviter que ça plante si elles manquent
+    "process.env.BUILT_IN_FORGE_API_KEY": JSON.stringify(""),
+    "process.env.JWT_SECRET": JSON.stringify("default-secret"), 
   },
 
   plugins,
@@ -42,6 +47,7 @@ export default defineConfig({
       ".manusvm.computer",
       "localhost",
       "127.0.0.1",
+      "forfeo-booking-platform-production.up.railway.app"
     ],
     fs: {
       strict: true,
