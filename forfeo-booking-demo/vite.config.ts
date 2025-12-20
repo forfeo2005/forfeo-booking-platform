@@ -9,7 +9,7 @@ import { vitePluginManusRuntime } from "vite-plugin-manus-runtime";
 const plugins = [react(), tailwindcss(), jsxLocPlugin(), vitePluginManusRuntime()];
 
 export default defineConfig({
-  // Injection brutale des variables pour forcer le fonctionnement
+  // ON DÉFINIT LES VARIABLES AU CAS OÙ LE FICHIER ENV.TS NE SUFFIRAIT PAS
   define: {
     "process.env.OAUTH_SERVER_URL": JSON.stringify("https://forfeo-booking-platform-production.up.railway.app"),
     "process.env.BUILT_IN_FORGE_API_URL": JSON.stringify("https://api.forfeo.com"),
@@ -21,7 +21,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "client", "src"),
-      "@shared": path.resolve(import.meta.dirname, "shared"),
+      "@shared": path.resolve(import.meta.dirname, "shared"), // Si shared n'existe pas, ça ne plantera pas le build
       "@assets": path.resolve(import.meta.dirname, "attached_assets"),
     },
   },
