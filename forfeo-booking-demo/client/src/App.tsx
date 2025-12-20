@@ -22,9 +22,9 @@ function Router() {
 }
 
 /* -------------------------------------------------
-   APP (NEUTRE – AUTH PAR PAGE)
+   APP (PROD READY)
 ------------------------------------------------- */
-function App() {
+export default function App() {
   return (
     <ErrorBoundary>
       <ThemeProvider defaultTheme="light">
@@ -36,5 +36,3 @@ function App() {
     </ErrorBoundary>
   );
 }
-
-export default App;
