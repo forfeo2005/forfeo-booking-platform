@@ -9,12 +9,12 @@ import { vitePluginManusRuntime } from "vite-plugin-manus-runtime";
 const plugins = [react(), tailwindcss(), jsxLocPlugin(), vitePluginManusRuntime()];
 
 export default defineConfig({
-  // 👇 CETTE SECTION FORCE L'INJECTION DES VARIABLES DANS LE CODE DU NAVIGATEUR
+  // 👇 ICI, ON ÉCRIT LES VALEURS EN DUR. PLUS DE "PROCESS.ENV" VIDE.
   define: {
-    "process.env.OAUTH_SERVER_URL": JSON.stringify(process.env.OAUTH_SERVER_URL),
-    "process.env.BUILT_IN_FORGE_API_URL": JSON.stringify(process.env.BUILT_IN_FORGE_API_URL),
-    "process.env.OWNER_OPEN_ID": JSON.stringify(process.env.OWNER_OPEN_ID),
-    "process.env.VITE_APP_ID": JSON.stringify(process.env.VITE_APP_ID),
+    "process.env.OAUTH_SERVER_URL": JSON.stringify("https://forfeo-booking-platform-production.up.railway.app"),
+    "process.env.BUILT_IN_FORGE_API_URL": JSON.stringify("https://api.forfeo.com"),
+    "process.env.OWNER_OPEN_ID": JSON.stringify("admin-forfeo"),
+    "process.env.VITE_APP_ID": JSON.stringify("forfeo-booking-app"),
   },
 
   plugins,
