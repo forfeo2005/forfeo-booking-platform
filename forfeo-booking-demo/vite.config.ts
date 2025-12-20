@@ -6,25 +6,17 @@ import path from "path";
 import { defineConfig } from "vite";
 import { vitePluginManusRuntime } from "vite-plugin-manus-runtime";
 
-// Définition des plugins
 const plugins = [react(), tailwindcss(), jsxLocPlugin(), vitePluginManusRuntime()];
 
-// Configuration BLINDÉE pour Railway
 export default defineConfig({
-  // 👇 ICI, ON ÉCRIT LES ADRESSES EN DUR. IMPOSSIBLE DE RATER.
+  // Injection brutale des variables pour forcer le fonctionnement
   define: {
     "process.env.OAUTH_SERVER_URL": JSON.stringify("https://forfeo-booking-platform-production.up.railway.app"),
     "process.env.BUILT_IN_FORGE_API_URL": JSON.stringify("https://api.forfeo.com"),
     "process.env.OWNER_OPEN_ID": JSON.stringify("admin-forfeo"),
     "process.env.VITE_APP_ID": JSON.stringify("forfeo-booking-app"),
     "process.env.NODE_ENV": JSON.stringify("production"),
-    
-    // Sécurités anti-crash (valeurs vides pour éviter les undefined)
-    "process.env.BUILT_IN_FORGE_API_KEY": JSON.stringify(""),
-    "process.env.JWT_SECRET": JSON.stringify("ignore-frontend"),
-    "process.env.DATABASE_URL": JSON.stringify("ignore-frontend"),
   },
-
   plugins,
   resolve: {
     alias: {
@@ -42,9 +34,7 @@ export default defineConfig({
   },
   server: {
     host: true,
-    allowedHosts: ["all"], // Autorise tout le monde (Railway, localhost, etc.)
-    fs: {
-      strict: false,
-    },
+    allowedHosts: ["all"],
+    fs: { strict: false },
   },
 });
