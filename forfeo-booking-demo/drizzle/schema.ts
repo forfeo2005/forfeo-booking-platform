@@ -5,7 +5,6 @@ import {
   uuid,
   integer,
   boolean,
-  serial,
 } from "drizzle-orm/pg-core";
 import { InferInsertModel, InferSelectModel } from "drizzle-orm";
 
@@ -39,7 +38,7 @@ export type Company = InferSelectModel<typeof companies>;
 export type InsertCompany = InferInsertModel<typeof companies>;
 
 /* =========================================================
-   SERVICES (expériences / forfaits)
+   SERVICES
 ========================================================= */
 export const services = pgTable("services", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -56,7 +55,7 @@ export type Service = InferSelectModel<typeof services>;
 export type InsertService = InferInsertModel<typeof services>;
 
 /* =========================================================
-   AVAILABILITY SLOTS (créneaux précis)
+   AVAILABILITY SLOTS
 ========================================================= */
 export const availabilitySlots = pgTable("availability_slots", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -71,14 +70,14 @@ export type InsertAvailabilitySlot =
   InferInsertModel<typeof availabilitySlots>;
 
 /* =========================================================
-   RECURRING SCHEDULES (horaires récurrents)
+   RECURRING SCHEDULES
 ========================================================= */
 export const recurringSchedules = pgTable("recurring_schedules", {
   id: uuid("id").defaultRandom().primaryKey(),
   serviceId: uuid("service_id").notNull(),
   dayOfWeek: integer("day_of_week").notNull(), // 0 = dimanche
-  startHour: integer("start_hour").notNull(), // ex: 9
-  endHour: integer("end_hour").notNull(),     // ex: 17
+  startHour: integer("start_hour").notNull(),
+  endHour: integer("end_hour").notNull(),
 });
 
 export type RecurringSchedule =
@@ -100,7 +99,7 @@ export type Customer = InferSelectModel<typeof customers>;
 export type InsertCustomer = InferInsertModel<typeof customers>;
 
 /* =========================================================
-   BOOKINGS (réservations)
+   BOOKINGS
 ========================================================= */
 export const bookings = pgTable("bookings", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -113,3 +112,49 @@ export const bookings = pgTable("bookings", {
 
 export type Booking = InferSelectModel<typeof bookings>;
 export type InsertBooking = InferInsertModel<typeof bookings>;
+
+/* =========================================================
+   REVIEWS ⭐
+========================================================= */
+export const reviews = pgTable("reviews", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  serviceId: uuid("service_id").notNull(),
+  customerId: uuid("customer_id").notNull(),
+  rating: integer("rating").notNull(), // 1 à 5
+  comment: text("comment"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export type Review = InferSelectModel<typeof reviews>;
+export type InsertReview = InferInsertModel<typeof reviews>;
+
+/* =========================================================
+   CHAT MESSAGES 💬
+========================================================= */
+export const chatMessages = pgTable("chat_messages", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  bookingId: uuid("booking_id").notNull(),
+  senderId: text("sender_id").notNull(),
+  message: text("message").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export type ChatMessage = InferSelectModel<typeof chatMessages>;
+export type InsertChatMessage =
+  InferInsertModel<typeof chatMessages>;
+
+/* =========================================================
+   NOTIFICATION LOGS 🔔
+========================================================= */
+export const notificationLogs = pgTable("notification_logs", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: text("user_id").notNull(),
+  type: text("type").notNull(),
+  payload: text("payload"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export type NotificationLog =
+  InferSelectModel<typeof notificationLogs>;
+export type InsertNotificationLog =
+  InferInsertModel<typeof notificationLogs>;
