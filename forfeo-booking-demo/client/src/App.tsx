@@ -6,10 +6,8 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
+import Header from "./components/Header";
 
-/* -------------------------------------------------
-   ROUTER
-------------------------------------------------- */
 function Router() {
   return (
     <Switch>
@@ -21,14 +19,12 @@ function Router() {
   );
 }
 
-/* -------------------------------------------------
-   APP (PROD READY)
-------------------------------------------------- */
 export default function App() {
   return (
     <ErrorBoundary>
       <ThemeProvider defaultTheme="light">
         <TooltipProvider>
+          <Header />
           <Toaster />
           <Router />
         </TooltipProvider>
