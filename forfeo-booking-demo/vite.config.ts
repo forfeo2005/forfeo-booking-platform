@@ -9,8 +9,13 @@ import { vitePluginManusRuntime } from "vite-plugin-manus-runtime";
 const plugins = [react(), tailwindcss(), jsxLocPlugin(), vitePluginManusRuntime()];
 
 export default defineConfig({
-  // 👇 C'EST ICI QUE NOUS AUTORISONS LES VARIABLES POUR LE NAVIGATEUR
-  envPrefix: ["VITE_", "OAUTH_", "BUILT_IN_", "OWNER_"],
+  // 👇 CETTE SECTION FORCE L'INJECTION DES VARIABLES DANS LE CODE DU NAVIGATEUR
+  define: {
+    "process.env.OAUTH_SERVER_URL": JSON.stringify(process.env.OAUTH_SERVER_URL),
+    "process.env.BUILT_IN_FORGE_API_URL": JSON.stringify(process.env.BUILT_IN_FORGE_API_URL),
+    "process.env.OWNER_OPEN_ID": JSON.stringify(process.env.OWNER_OPEN_ID),
+    "process.env.VITE_APP_ID": JSON.stringify(process.env.VITE_APP_ID),
+  },
 
   plugins,
   resolve: {
