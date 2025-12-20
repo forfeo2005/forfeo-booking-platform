@@ -1,12 +1,11 @@
 import express from "express";
-import cookieParser from "cookie-parser";
-import * as trpcExpress from "@trpc/server/adapters/express";
 import { createServer } from "http";
 import path from "path";
 import { fileURLToPath } from "url";
 
+import * as trpcExpress from "@trpc/server/adapters/express";
 import { appRouter } from "./routers";
-import { createContext } from "./context";
+import { createContext } from "./_core/context";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -15,15 +14,11 @@ async function startServer() {
   const app = express();
   const server = createServer(app);
 
-  /* -------------------------------------------------
-     MIDDLEWARES (IMPORTANT)
-  ------------------------------------------------- */
-  app.use(cookieParser());
   app.use(express.json());
 
-  /* -------------------------------------------------
-     tRPC API (DOIT ÊTRE AVANT LE FRONTEND)
-  ------------------------------------------------- */
+  // ----------------------------
+  // tRPC API
+  // ----------------------------
   app.use(
     "/api/trpc",
     trpcExpress.createExpressMiddleware({
@@ -32,9 +27,9 @@ async function startServer() {
     })
   );
 
-  /* -------------------------------------------------
-     STATIC FRONTEND FILES
-  ------------------------------------------------- */
+  // ----------------------------
+  // Static frontend
+  // ----------------------------
   const staticPath =
     process.env.NODE_ENV === "production"
       ? path.resolve(__dirname, "public")
@@ -42,9 +37,7 @@ async function startServer() {
 
   app.use(express.static(staticPath));
 
-  /* -------------------------------------------------
-     FRONTEND ROUTING FALLBACK
-  ------------------------------------------------- */
+  // SPA fallback (⚠️ TOUJOURS EN DERNIER)
   app.get("*", (_req, res) => {
     res.sendFile(path.join(staticPath, "index.html"));
   });
@@ -52,7 +45,7 @@ async function startServer() {
   const port = process.env.PORT || 3000;
 
   server.listen(port, () => {
-    console.log(`Server running on http://localhost:${port}`);
+    console.log(`✅ Server running on http://localhost:${port}`);
   });
 }
 
