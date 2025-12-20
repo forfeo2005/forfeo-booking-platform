@@ -1,25 +1,33 @@
 import { trpc } from "@/lib/trpc";
+import { useLocation } from "wouter";
 import { getLoginUrl } from "@/const";
 
 export default function Dashboard() {
-  const { data: user, isLoading, error } = trpc.auth.me.useQuery();
+  const [, setLocation] = useLocation();
+  const { data: user, isLoading, isError } = trpc.auth.me.useQuery();
 
-  // Chargement
+  // ⏳ Chargement
   if (isLoading) {
-    return <p>Chargement...</p>;
+    return <p style={{ padding: 32 }}>Chargement...</p>;
   }
 
-  // Non connecté → redirection login
-  if (error || !user) {
-    window.location.href = getLoginUrl();
+  // 🔒 Non connecté → redirection
+  if (isError || !user) {
+    // 👉 redirection propre (pas de side-effect direct dans le render)
+    setTimeout(() => {
+      window.location.href = getLoginUrl();
+    }, 0);
+
     return null;
   }
 
-  // Connecté
+  // ✅ Connecté
   return (
     <div style={{ padding: 32 }}>
       <h1>Dashboard</h1>
-      <p>Bienvenue <strong>{user.name}</strong></p>
+      <p>
+        Bienvenue <strong>{user.name}</strong>
+      </p>
 
       <pre
         style={{
