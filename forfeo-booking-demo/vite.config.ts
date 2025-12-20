@@ -6,10 +6,12 @@ import path from "path";
 import { defineConfig } from "vite";
 import { vitePluginManusRuntime } from "vite-plugin-manus-runtime";
 
-
 const plugins = [react(), tailwindcss(), jsxLocPlugin(), vitePluginManusRuntime()];
 
 export default defineConfig({
+  // 👇 C'EST ICI QUE NOUS AUTORISONS LES VARIABLES POUR LE NAVIGATEUR
+  envPrefix: ["VITE_", "OAUTH_", "BUILT_IN_", "OWNER_"],
+
   plugins,
   resolve: {
     alias: {
