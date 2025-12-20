@@ -1,6 +1,6 @@
-import { router, publicProcedure } from "./trpc";
+import { router, publicProcedure } from "./_core/trpc";
 import { COOKIE_NAME } from "@shared/const";
-import { getSessionCookieOptions } from "./cookies";
+import { getSessionCookieOptions } from "./_core/cookies";
 
 /**
  * Router principal de l'application
@@ -11,8 +11,7 @@ export const appRouter = router({
    */
   auth: router({
     /**
-     * Retourne toujours un utilisateur
-     * (mode DEV sécurisé)
+     * Toujours retourner un user en DEV
      */
     me: publicProcedure.query(({ ctx }) => {
       return (
@@ -36,7 +35,4 @@ export const appRouter = router({
   }),
 });
 
-/**
- * Type tRPC exporté pour le frontend
- */
 export type AppRouter = typeof appRouter;
