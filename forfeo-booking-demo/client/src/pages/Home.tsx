@@ -1,45 +1,34 @@
 import { trpc } from "@/lib/trpc";
 
 export default function Home() {
-  const { data: user, isLoading, error } = trpc.auth.me.useQuery();
+  const { data: user, isLoading, isError } = trpc.auth.me.useQuery();
 
   if (isLoading) {
-    return (
-      <div style={{ padding: 40 }}>
-        <h1>Home</h1>
-        <p>Chargement de l’utilisateur…</p>
-      </div>
-    );
+    return <div>Chargement...</div>;
   }
 
-  if (error) {
+  if (isError || !user) {
     return (
-      <div style={{ padding: 40 }}>
-        <h1>Home</h1>
-        <p style={{ color: "red" }}>
-          Erreur lors du chargement de l’utilisateur : {error.message}
-        </p>
+      <div>
+        <h1>Forfeo Booking</h1>
+        <p>Vous devez être connecté pour continuer.</p>
+        <button
+          onClick={() => {
+            window.location.href = "/api/oauth/login";
+          }}
+        >
+          Se connecter
+        </button>
       </div>
     );
   }
 
   return (
-    <div style={{ padding: 40 }}>
-      <h1>Home</h1>
+    <div>
+      <h1>Forfeo Booking</h1>
+      <p>Bienvenue {user.name}</p>
 
-      <h2>Utilisateur connecté (mode DEV)</h2>
-
-      <pre
-        style={{
-          background: "#111",
-          color: "#0f0",
-          padding: 20,
-          borderRadius: 8,
-          marginTop: 20,
-        }}
-      >
-        {JSON.stringify(user, null, 2)}
-      </pre>
+      {/* La suite du module de réservation viendra ici */}
     </div>
   );
 }
