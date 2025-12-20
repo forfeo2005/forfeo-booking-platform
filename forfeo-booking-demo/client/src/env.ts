@@ -1,13 +1,12 @@
 export const ENV = {
-  // ON FORCE LES ADRESSES (C'est la ceinture de sécurité)
-  oAuthServerUrl: "https://forfeo-booking-platform-production.up.railway.app",
-  forgeApiUrl: "https://api.forfeo.com",
-  
-  // ON SECURISE LE RESTE (Pour éviter les erreurs)
-  forgeApiKey: "", 
+  // URL du backend (fallback automatique)
+  apiBaseUrl:
+    import.meta.env.VITE_API_URL ?? window.location.origin,
+
+  // Identité app (OK côté frontend)
   appId: "forfeo-booking-app",
   ownerOpenId: "admin-forfeo",
-  cookieSecret: "secret-par-defaut-frontend",
-  databaseUrl: "", 
-  isProduction: true,
+
+  // Flags
+  isProduction: import.meta.env.PROD,
 };
