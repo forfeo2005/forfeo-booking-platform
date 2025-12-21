@@ -40,10 +40,6 @@ export default function Home() {
                   >
                     Se connecter
                   </button>
-
-                  <a className="btn btn-outline-secondary" href="/">
-                    Retour
-                  </a>
                 </div>
 
                 <div className="small text-muted mt-3">
@@ -63,7 +59,6 @@ export default function Home() {
 
   return (
     <div className="container py-5">
-      {/* Header */}
       <div className="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
         <div>
           <h1 className="display-6 fw-bold mb-1">Forfeo Booking</h1>
@@ -71,21 +66,17 @@ export default function Home() {
             Bienvenue <span className="fw-semibold">{user.name}</span>
           </div>
         </div>
-
-        <div className="d-flex align-items-center gap-2">
-          <span className="badge text-bg-success">En ligne</span>
-          <a className="btn btn-outline-dark btn-sm" href="/admin">
-            Tableau de bord
-          </a>
-        </div>
+        <span className="badge text-bg-success">En ligne</span>
       </div>
 
-      {/* Quick actions */}
-      <div className="row g-3">
-        <div className="col-12 col-md-6 col-lg-3">
-          <div className="card shadow-sm h-100">
-            <div className="card-body">
-              <div className="fw-semibold">Réservations</div>
-              <div className="text-muted small">Voir, confirmer, annuler</div>
-              <div className="mt-3">
-                <a className="btn btn-primary btn-sm" href="/bo
+      <div className="card shadow-sm">
+        <div className="card-body">
+          <div className="fw-semibold mb-1">Prochaine étape</div>
+          <div className="text-muted">
+            Ajoute ici ton dashboard (réservations, services, clients, chat).
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
