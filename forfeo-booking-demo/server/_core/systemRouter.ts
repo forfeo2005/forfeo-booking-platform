@@ -2,7 +2,7 @@ import { z } from "zod";
 import { notifyOwner } from "./notification";
 import { adminProcedure, publicProcedure, router } from "./trpc";
 
-// ✅ 1) Ajout de l'import du router bookings
+// ✅ AJOUT: on importe le router bookings
 import { bookingsRouter } from "./routers/bookings";
 
 export const systemRouter = router({
@@ -30,6 +30,6 @@ export const systemRouter = router({
       } as const;
     }),
 
-  // ✅ 2) Nouveau bloc: bookings (tRPC)
+  // ✅ AJOUT: on expose /bookings via tRPC
   bookings: bookingsRouter,
 });
