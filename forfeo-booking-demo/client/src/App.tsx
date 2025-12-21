@@ -1,34 +1,24 @@
-import { Toaster } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
-import ErrorBoundary from "./components/ErrorBoundary";
-import { ThemeProvider } from "./contexts/ThemeContext";
-import Home from "./pages/Home";
-import Dashboard from "./pages/Dashboard";
-import Header from "./components/Header";
 
-function Router() {
-  return (
-    <Switch>
-      <Route path="/" component={Home} />
-      <Route path="/dashboard" component={Dashboard} />
-      <Route path="/404" component={NotFound} />
-      <Route component={NotFound} />
-    </Switch>
-  );
-}
+import Home from "@/pages/Home";
+import Bookings from "@/pages/Bookings";
+import Services from "@/pages/Services";
+import Customers from "@/pages/Customers";
+import Chat from "@/pages/Chat";
+import NotFound from "@/pages/NotFound";
 
 export default function App() {
   return (
-    <ErrorBoundary>
-      <ThemeProvider defaultTheme="light">
-        <TooltipProvider>
-          <Header />
-          <Toaster />
-          <Router />
-        </TooltipProvider>
-      </ThemeProvider>
-    </ErrorBoundary>
+    <Switch>
+      <Route path="/" component={Home} />
+
+      <Route path="/bookings" component={Bookings} />
+      <Route path="/services" component={Services} />
+      <Route path="/customers" component={Customers} />
+      <Route path="/chat" component={Chat} />
+
+      {/* Fallback si aucune route match */}
+      <Route component={NotFound} />
+    </Switch>
   );
 }
