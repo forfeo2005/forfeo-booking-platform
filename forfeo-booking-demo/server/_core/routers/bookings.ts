@@ -1,35 +1,53 @@
 import { z } from "zod";
+import { desc, eq } from "drizzle-orm";
+
+// ⚠️ Chemin depuis: server/_core/routers/bookings.ts  ->  drizzle/schema.ts
+import { bookings, customers, services } from "../../../drizzle/schema";
+
+// ⚠️ Ajuste ces imports si chez toi les noms diffèrent (trpc.ts)
 import { router, protectedProcedure } from "../trpc";
 
-// ⚠️ IMPORTANT : adapte ce chemin selon où est ton schema drizzle
-// Dans ton repo, tu as un dossier "drizzle" à la racine de "forfeo-booking-demo".
-// Souvent, le bon chemin depuis server/_core/routers est: "../../../drizzle/schema"
-import { bookings } from "../../../drizzle/schema";
-
-import { desc } from "drizzle-orm";
-
 export const bookingsRouter = router({
+  // Liste des réservations (pour alimenter /bookings)
   list: protectedProcedure.query(async ({ ctx }) => {
+    // Si tu n’as pas encore branché ctx.db, retourne une liste vide
+    if (!ctx.db) return [];
+
     const rows = await ctx.db
-      .select()
+      .select({
+        id: bookings.id,
+        status: bookings.status,
+        createdAt: bookings.createdAt,
+        serviceId: bookings.serviceId,
+        customerId: bookings.customerId,
+        serviceTitle: services.title,
+        customerName: customers.name,
+        customerEmail: customers.email,
+      })
       .from(bookings)
-      .orderBy(desc(bookings.id));
+      .leftJoin(services, eq(bookings.serviceId, services.id))
+      .leftJoin(customers, eq(bookings.customerId, customers.id))
+      .orderBy(desc(bookings.createdAt))
+      .limit(100);
 
     return rows;
   }),
 
+  // Confirmer / Annuler (boutons dans la table)
   updateStatus: protectedProcedure
     .input(
       z.object({
-        id: z.number(),
-        status: z.enum(["pending", "confirmed", "cancelled"]),
+        bookingId: z.string().min(1),
+        status: z.enum(["CONFIRMED", "CANCELLED", "PENDING"]),
       })
     )
     .mutation(async ({ ctx, input }) => {
+      if (!ctx.db) throw new Error("DB non configurée");
+
       await ctx.db
         .update(bookings)
         .set({ status: input.status })
-        .where(bookings.id, input.id);
+        .where(eq(bookings.id, input.bookingId));
 
       return { ok: true };
     }),
