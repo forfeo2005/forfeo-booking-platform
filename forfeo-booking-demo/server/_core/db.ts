@@ -1,22 +1,13 @@
-import { drizzle } from "drizzle-orm/node-postgres";
-import { Pool } from "pg";
-
-// ⚠️ Chemin depuis server/_core/db.ts -> drizzle/schema.ts
+import mysql from "mysql2/promise";
+import { drizzle } from "drizzle-orm/mysql2";
 import * as schema from "../../drizzle/schema";
 
-const connectionString = process.env.DATABASE_URL;
+const url = process.env.MYSQL_URL || process.env.DATABASE_URL;
 
-if (!connectionString) {
-  throw new Error("DATABASE_URL manquant dans les variables d'environnement.");
+if (!url) {
+  throw new Error("MYSQL_URL ou DATABASE_URL manquant dans Railway.");
 }
 
-// Railway/Render/etc. utilisent souvent SSL en prod
-const pool = new Pool({
-  connectionString,
-  ssl:
-    process.env.NODE_ENV === "production"
-      ? { rejectUnauthorized: false }
-      : undefined,
-});
+const pool = mysql.createPool(url);
 
-export const db = drizzle(pool, { schema });
+export const db = drizzle(pool, { schema, mode: "default" });
