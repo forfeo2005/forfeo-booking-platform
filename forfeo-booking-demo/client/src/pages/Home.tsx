@@ -1,4 +1,5 @@
 import { trpc } from "@/lib/trpc";
+import { Link } from "wouter";
 
 export default function Home() {
   const { data: user, isLoading, isError } = trpc.auth.me.useQuery();
@@ -81,9 +82,9 @@ export default function Home() {
               <div className="fw-semibold">Réservations</div>
               <div className="text-muted small">Voir, confirmer, annuler</div>
               <div className="mt-3">
-                <a className="btn btn-primary btn-sm" href="/bookings">
-                  Ouvrir
-                </a>
+                <Link href="/bookings">
+                  <a className="btn btn-primary btn-sm">Ouvrir</a>
+                </Link>
               </div>
             </div>
           </div>
@@ -95,9 +96,9 @@ export default function Home() {
               <div className="fw-semibold">Services</div>
               <div className="text-muted small">Forfaits & activités</div>
               <div className="mt-3">
-                <a className="btn btn-outline-primary btn-sm" href="/services">
-                  Gérer
-                </a>
+                <Link href="/services">
+                  <a className="btn btn-outline-primary btn-sm">Gérer</a>
+                </Link>
               </div>
             </div>
           </div>
@@ -109,9 +110,9 @@ export default function Home() {
               <div className="fw-semibold">Clients</div>
               <div className="text-muted small">Profils & historique</div>
               <div className="mt-3">
-                <a className="btn btn-outline-primary btn-sm" href="/customers">
-                  Consulter
-                </a>
+                <Link href="/customers">
+                  <a className="btn btn-outline-primary btn-sm">Consulter</a>
+                </Link>
               </div>
             </div>
           </div>
@@ -123,9 +124,9 @@ export default function Home() {
               <div className="fw-semibold">Chat</div>
               <div className="text-muted small">Messages avec clients</div>
               <div className="mt-3">
-                <a className="btn btn-outline-primary btn-sm" href="/chat">
-                  Ouvrir
-                </a>
+                <Link href="/chat">
+                  <a className="btn btn-outline-primary btn-sm">Ouvrir</a>
+                </Link>
               </div>
             </div>
           </div>
