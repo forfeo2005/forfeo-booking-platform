@@ -1,17 +1,22 @@
-import mysql from "mysql2/promise";
-import { drizzle } from "drizzle-orm/mysql2";
+import { drizzle } from "drizzle-orm/node-postgres";
+import { Pool } from "pg";
 
-// Singleton (évite de recréer un pool à chaque requête)
-let _db: ReturnType<typeof drizzle> | null = null;
+// ⚠️ Chemin depuis server/_core/db.ts -> drizzle/schema.ts
+import * as schema from "../../drizzle/schema";
 
-export function getDb() {
-  if (_db) return _db;
+const connectionString = process.env.DATABASE_URL;
 
-  const url = process.env.MYSQL_URL || process.env.DATABASE_URL;
-  if (!url) return null; // mode démo si pas de DB
-
-  const pool = mysql.createPool(url);
-  _db = drizzle(pool);
-
-  return _db;
+if (!connectionString) {
+  throw new Error("DATABASE_URL manquant dans les variables d'environnement.");
 }
+
+// Railway/Render/etc. utilisent souvent SSL en prod
+const pool = new Pool({
+  connectionString,
+  ssl:
+    process.env.NODE_ENV === "production"
+      ? { rejectUnauthorized: false }
+      : undefined,
+});
+
+export const db = drizzle(pool, { schema });
