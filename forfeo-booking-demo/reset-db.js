@@ -1,6 +1,6 @@
 // Fichier: reset-db.js
-require('dotenv').config();
-const mysql = require('mysql2/promise');
+import 'dotenv/config';
+import mysql from 'mysql2/promise';
 
 async function wipe() {
   console.log("🔌 Connexion à la base de données...");
@@ -12,11 +12,9 @@ async function wipe() {
 
   const connection = await mysql.createConnection(process.env.DATABASE_URL);
 
-  // 1. Désactiver la vérification des clés étrangères (C'est la clé magique !)
   console.log("🔓 Désactivation des sécurités Foreign Keys...");
   await connection.query('SET FOREIGN_KEY_CHECKS = 0');
 
-  // 2. Récupérer la liste de toutes les tables
   const [rows] = await connection.query(`
     SELECT table_name
     FROM information_schema.tables
@@ -27,8 +25,6 @@ async function wipe() {
       console.log("✅ La base est déjà vide.");
   } else {
       console.log(`🔥 Suppression de ${rows.length} tables...`);
-      
-      // 3. Supprimer chaque table une par une sans pitié
       for (const row of rows) {
           const tableName = row.TABLE_NAME || row.table_name;
           await connection.query(`DROP TABLE IF EXISTS \`${tableName}\``);
@@ -36,15 +32,13 @@ async function wipe() {
       }
   }
 
-  // 4. Réactiver la sécurité
   await connection.query('SET FOREIGN_KEY_CHECKS = 1');
-  console.log("✨ Nettoyage terminé avec succès !");
-  
+  console.log("✨ Nettoyage terminé !");
   await connection.end();
   process.exit(0);
 }
 
 wipe().catch(err => {
-  console.error("❌ Une erreur est survenue :", err);
+  console.error(err);
   process.exit(1);
 });
