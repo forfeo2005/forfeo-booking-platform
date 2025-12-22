@@ -1,38 +1,32 @@
 import type { CreateExpressContextOptions } from "@trpc/server/adapters/express";
-import { COOKIE_NAME } from "@shared/const";
-import cookie from "cookie";
-import type { User } from "../../drizzle/schema";
 import { db } from "./db";
+import { getSessionFromRequest } from "./auth/session"; // Notre helper créé à l'étape 3
+import type { User } from "../../drizzle/schema";
 
 export type TrpcContext = {
   req: CreateExpressContextOptions["req"];
   res: CreateExpressContextOptions["res"];
   user: User | null;
+  orgId: number | null; // ID numérique maintenant (MySQL serial)
+  sessionId: string | null;
   db: typeof db;
 };
 
 export async function createContext(
   opts: CreateExpressContextOptions
 ): Promise<TrpcContext> {
-  const rawCookie = opts.req.headers.cookie ?? "";
-  const parsed = cookie.parse(rawCookie);
+  const { req, res } = opts;
 
-  // ✅ Si cookie dev => connecté
-  const isDevLoggedIn = parsed[COOKIE_NAME] === "dev";
-
-  const devUser: User = {
-    id: "dev-user-1",
-    email: "dev@forfeo.com",
-    name: "Forfeo Dev",
-    role: "ADMIN",
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
+  // Récupère la session depuis la DB via le cookie (cookie-parser doit être actif dans index.ts)
+  const sessionData = await getSessionFromRequest(req);
 
   return {
-    req: opts.req,
-    res: opts.res,
-    user: isDevLoggedIn ? devUser : null,
+    req,
+    res,
     db,
+    user: sessionData ? sessionData.user : null,
+    // On attache l'ID de l'organisation active au contexte pour le filtrage multi-tenant
+    orgId: sessionData?.session.activeOrgId || null,
+    sessionId: sessionData?.session.id || null,
   };
 }
