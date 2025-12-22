@@ -29,59 +29,42 @@ export default function Services() {
     <div className="space-y-6">
       <h1 className="text-3xl font-bold">Mes Services</h1>
 
-      {/* Formulaire de création */}
       <div className="bg-white p-6 rounded-lg shadow-sm border">
         <h2 className="text-xl font-semibold mb-4">Ajouter un nouveau service</h2>
         <form onSubmit={handleSubmit} className="flex flex-wrap gap-4 items-end">
           <div className="flex-1 min-w-[200px]">
-            <label className="block text-sm font-medium mb-1">Nom du service</label>
+            <label className="block text-sm font-medium mb-1">Nom</label>
             <input 
               value={name} onChange={(e) => setName(e.target.value)}
               className="border rounded p-2 w-full" 
-              placeholder="Ex: Consultation Vidéo"
-              required
+              placeholder="Ex: Consultation" required
             />
           </div>
           <div className="w-32">
             <label className="block text-sm font-medium mb-1">Prix (€)</label>
             <input 
               type="number" value={price} onChange={(e) => setPrice(Number(e.target.value))}
-              className="border rounded p-2 w-full" 
-              required
-            />
-          </div>
-           <div className="w-32">
-            <label className="block text-sm font-medium mb-1">Durée (min)</label>
-            <input 
-              type="number" value={duration} onChange={(e) => setDuration(Number(e.target.value))}
-              className="border rounded p-2 w-full" 
-              required
+              className="border rounded p-2 w-full" required
             />
           </div>
           <button 
-            type="submit" 
-            disabled={createService.isPending} 
+            type="submit" disabled={createService.isPending} 
             className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 font-medium h-[42px]"
           >
-            {createService.isPending ? "Ajout..." : "Ajouter"}
+            {createService.isPending ? "..." : "Ajouter"}
           </button>
         </form>
       </div>
 
-      {/* Liste des services */}
       <div className="grid gap-4">
         {services?.map((s) => (
           <div key={s.id} className="bg-white p-4 rounded shadow-sm border flex justify-between items-center">
-            <span className="font-semibold text-lg">{s.name}</span>
-            <span className="text-gray-600 bg-gray-100 px-3 py-1 rounded-full text-sm">
-              {s.price} € • {s.duration} min
-            </span>
+            <span className="font-semibold">{s.name}</span>
+            <span className="text-gray-600 bg-gray-100 px-3 py-1 rounded-full text-sm">{s.price} €</span>
           </div>
         ))}
-        {services?.length === 0 && (
-          <p className="text-gray-500 italic">Aucun service créé pour l'instant.</p>
-        )}
       </div>
     </div>
   );
 }
+// Fix v2
