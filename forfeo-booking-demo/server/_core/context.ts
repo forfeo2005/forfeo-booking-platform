@@ -9,11 +9,13 @@ import { COOKIE_NAME } from "@shared/const";
 export type TrpcContext = {
   req: CreateExpressContextOptions["req"];
   res: CreateExpressContextOptions["res"];
-  user: User | null; // ✅ maintenant peut être null
+  user: User | null;
   db: typeof db;
 };
 
-async function getUserFromCookie(req: CreateExpressContextOptions["req"]): Promise<User | null> {
+async function getUserFromCookie(
+  req: CreateExpressContextOptions["req"]
+): Promise<User | null> {
   try {
     const rawCookie = req.headers.cookie;
     if (!rawCookie) return null;
@@ -28,7 +30,6 @@ async function getUserFromCookie(req: CreateExpressContextOptions["req"]): Promi
     const secret = new TextEncoder().encode(secretStr);
     const { payload } = await jwtVerify(token, secret);
 
-    // On essaie de récupérer l'identité depuis le JWT
     const id =
       typeof payload.sub === "string"
         ? payload.sub
@@ -43,13 +44,13 @@ async function getUserFromCookie(req: CreateExpressContextOptions["req"]): Promi
     const email =
       typeof (payload as any).email === "string" ? (payload as any).email : null;
 
-    // ✅ En attendant de brancher la DB user, on construit un user minimal
+    // ✅ Version simple (user minimal). Plus tard: tu peux fetch le vrai user DB ici.
     const now = new Date();
     const user: User = {
       id,
       email,
       name,
-      role: "ADMIN", // ou "USER" si tu préfères
+      role: "ADMIN", // ou "USER" si tu veux
       createdAt: now,
       updatedAt: now,
     };
@@ -63,7 +64,8 @@ async function getUserFromCookie(req: CreateExpressContextOptions["req"]): Promi
 export async function createContext(
   opts: CreateExpressContextOptions
 ): Promise<TrpcContext> {
-  // 🔁 OPTION DEV: si tu veux forcer connecté en local, mets DEV_FAKE_USER=1
+  // ✅ DEV optionnel: force connecté en local seulement
+  // (IMPORTANT: ne mets PAS DEV_FAKE_USER=1 sur Railway)
   if (process.env.DEV_FAKE_USER === "1") {
     const now = new Date();
     const fakeUser: User = {
@@ -75,21 +77,9 @@ export async function createContext(
       updatedAt: now,
     };
 
-    return {
-      req: opts.req,
-      res: opts.res,
-      user: fakeUser,
-      db,
-    };
+    return { req: opts.req, res: opts.res, user: fakeUser, db };
   }
 
-  // ✅ PROD / TEST : user vient du cookie (sinon null)
   const user = await getUserFromCookie(opts.req);
-
-  return {
-    req: opts.req,
-    res: opts.res,
-    user,
-    db,
-  };
+  return { req: opts.req, res: opts.res, user, db };
 }
