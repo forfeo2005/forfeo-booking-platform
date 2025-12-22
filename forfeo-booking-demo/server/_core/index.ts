@@ -1,9 +1,10 @@
 import "dotenv/config";
 import express from "express";
+import cookieParser from "cookie-parser"; // <--- AJOUT IMPORTANT
 import { createServer } from "http";
 import net from "net";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
-import { registerOAuthRoutes } from "./oauth";
+// import { registerOAuthRoutes } from "./oauth"; // <--- SUPPRIMÉ (On remplace par Auth interne)
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
@@ -53,8 +54,11 @@ async function startServer() {
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
+  // ✅ AJOUT COOKIE PARSER ICI
+  app.use(cookieParser());
+
   // OAuth callback under /api/oauth/callback + /api/oauth/login + /api/oauth/logout
-  registerOAuthRoutes(app);
+  // registerOAuthRoutes(app); // <--- DÉSACTIVÉ (Remplacé par authRouter tRPC)
 
   // tRPC API
   app.use(
