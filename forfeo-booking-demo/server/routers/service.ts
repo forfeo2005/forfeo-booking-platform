@@ -2,9 +2,9 @@ import { router, protectedProcedure } from "../_core/trpc";
 import { z } from "zod";
 import { services } from "@shared/schema";
 import { db } from "../db";
-import { sql } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
-// VERSION_MySQL_FIX_V2005 🚀
+// VERSION_MySQL_FINAL_V2006 🚀
 export const serviceRouter = router({
   create: protectedProcedure
     .input(z.object({
@@ -13,18 +13,25 @@ export const serviceRouter = router({
       duration: z.coerce.number(),
     }))
     .mutation(async ({ input, ctx }) => {
-      // Utilisation d'une insertion brute pour éviter le mot-clé 'default'
-      // qui fait planter ta base MySQL actuelle.
-      await db.execute(sql`
-        INSERT INTO services (name, price, duration, organization_id) 
-        VALUES (${input.name}, ${input.price}, ${input.duration}, ${ctx.user.organizationId})
-      `);
+      // Vérification de sécurité pour l'ID d'organisation
+      const orgId = ctx.user?.organizationId;
+      
+      if (!orgId) {
+        throw new Error("L'utilisateur n'est pas lié à une organisation.");
+      }
+
+      // Insertion propre sans le mot-clé 'default'
+      await db.insert(services).values({
+        name: input.name,
+        price: input.price,
+        duration: input.duration,
+        organizationId: orgId,
+      });
       
       return { success: true };
     }),
 
   list: protectedProcedure.query(async ({ ctx }) => {
-    const { eq } = await import("drizzle-orm");
     return await db.select()
       .from(services)
       .where(eq(services.organizationId, ctx.user.organizationId));
