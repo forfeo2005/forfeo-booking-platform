@@ -1,118 +1,86 @@
+import { useState } from "react";
+import { trpc } from "../utils/trpc";
+import { useQueryClient } from "@tanstack/react-query";
+
 export default function Services() {
+  const [name, setName] = useState("");
+  const [price, setPrice] = useState(0);
+  const [duration, setDuration] = useState(60);
+  
+  const queryClient = useQueryClient();
+  const { data: services, isLoading } = trpc.service.list.useQuery();
+  
+  const createService = trpc.service.create.useMutation({
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [["service", "list"]] });
+      setName("");
+      setPrice(0);
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    createService.mutate({ name, price, duration });
+  };
+
+  if (isLoading) return <div>Chargement...</div>;
+
   return (
-    <div className="container py-5">
-      <div className="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
-        <div>
-          <h1 className="h3 fw-bold mb-1">Services</h1>
-          <div className="text-muted">Créer et gérer tes forfaits & activités.</div>
-        </div>
-        <div className="d-flex align-items-center gap-2">
-          <span className="badge text-bg-primary">Catalogue</span>
-          <a className="btn btn-outline-secondary btn-sm" href="/">
-            ← Retour
-          </a>
-        </div>
+    <div className="space-y-6">
+      <h1 className="text-3xl font-bold">Mes Services</h1>
+
+      {/* Formulaire de création */}
+      <div className="bg-white p-6 rounded-lg shadow-sm border">
+        <h2 className="text-xl font-semibold mb-4">Ajouter un nouveau service</h2>
+        <form onSubmit={handleSubmit} className="flex flex-wrap gap-4 items-end">
+          <div className="flex-1 min-w-[200px]">
+            <label className="block text-sm font-medium mb-1">Nom du service</label>
+            <input 
+              value={name} onChange={(e) => setName(e.target.value)}
+              className="border rounded p-2 w-full" 
+              placeholder="Ex: Consultation Vidéo"
+              required
+            />
+          </div>
+          <div className="w-32">
+            <label className="block text-sm font-medium mb-1">Prix (€)</label>
+            <input 
+              type="number" value={price} onChange={(e) => setPrice(Number(e.target.value))}
+              className="border rounded p-2 w-full" 
+              required
+            />
+          </div>
+           <div className="w-32">
+            <label className="block text-sm font-medium mb-1">Durée (min)</label>
+            <input 
+              type="number" value={duration} onChange={(e) => setDuration(Number(e.target.value))}
+              className="border rounded p-2 w-full" 
+              required
+            />
+          </div>
+          <button 
+            type="submit" 
+            disabled={createService.isPending} 
+            className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 font-medium h-[42px]"
+          >
+            {createService.isPending ? "Ajout..." : "Ajouter"}
+          </button>
+        </form>
       </div>
 
-      <div className="card shadow-sm mb-3">
-        <div className="card-body">
-          <div className="d-flex flex-wrap gap-2 align-items-center justify-content-between">
-            <div className="d-flex flex-wrap gap-2">
-              <a className="btn btn-primary btn-sm" href="#">
-                + Nouveau service
-              </a>
-              <a className="btn btn-outline-primary btn-sm" href="#">
-                Importer
-              </a>
-            </div>
-
-            <div className="d-flex gap-2">
-              <input
-                className="form-control form-control-sm"
-                placeholder="Rechercher (nom, catégorie)…"
-                style={{ minWidth: 260 }}
-              />
-              <select className="form-select form-select-sm" defaultValue="all">
-                <option value="all">Tous</option>
-                <option value="active">Actifs</option>
-                <option value="inactive">Inactifs</option>
-              </select>
-            </div>
+      {/* Liste des services */}
+      <div className="grid gap-4">
+        {services?.map((s) => (
+          <div key={s.id} className="bg-white p-4 rounded shadow-sm border flex justify-between items-center">
+            <span className="font-semibold text-lg">{s.name}</span>
+            <span className="text-gray-600 bg-gray-100 px-3 py-1 rounded-full text-sm">
+              {s.price} € • {s.duration} min
+            </span>
           </div>
-        </div>
-      </div>
-
-      <div className="card shadow-sm">
-        <div className="card-body">
-          <div className="row g-3">
-            <div className="col-12 col-md-6 col-lg-4">
-              <div className="card h-100 border">
-                <div className="card-body">
-                  <div className="d-flex justify-content-between align-items-start">
-                    <div>
-                      <div className="fw-semibold">Massage 60 min</div>
-                      <div className="text-muted small">Bien-être</div>
-                    </div>
-                    <span className="badge text-bg-success">Actif</span>
-                  </div>
-                  <div className="mt-3 text-muted small">
-                    Durée: 60 min • Prix: 129 $
-                  </div>
-                  <div className="mt-3 d-flex gap-2">
-                    <button className="btn btn-sm btn-outline-primary">Modifier</button>
-                    <button className="btn btn-sm btn-outline-secondary">Disponibilités</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="col-12 col-md-6 col-lg-4">
-              <div className="card h-100 border">
-                <div className="card-body">
-                  <div className="d-flex justify-content-between align-items-start">
-                    <div>
-                      <div className="fw-semibold">Souper découverte</div>
-                      <div className="text-muted small">Restauration</div>
-                    </div>
-                    <span className="badge text-bg-success">Actif</span>
-                  </div>
-                  <div className="mt-3 text-muted small">
-                    Durée: 90 min • Prix: 89 $
-                  </div>
-                  <div className="mt-3 d-flex gap-2">
-                    <button className="btn btn-sm btn-outline-primary">Modifier</button>
-                    <button className="btn btn-sm btn-outline-secondary">Disponibilités</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="col-12 col-md-6 col-lg-4">
-              <div className="card h-100 border">
-                <div className="card-body">
-                  <div className="d-flex justify-content-between align-items-start">
-                    <div>
-                      <div className="fw-semibold">Atelier VIP</div>
-                      <div className="text-muted small">Expérience</div>
-                    </div>
-                    <span className="badge text-bg-secondary">Inactif</span>
-                  </div>
-                  <div className="mt-3 text-muted small">
-                    Durée: 120 min • Prix: 199 $
-                  </div>
-                  <div className="mt-3 d-flex gap-2">
-                    <button className="btn btn-sm btn-outline-primary">Modifier</button>
-                    <button className="btn btn-sm btn-outline-secondary">Activer</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="small text-muted mt-3">
-            Démo : plus tard on remplacera par une grille branchée sur la table <code>services</code>.
-          </div>
-        </div>
+        ))}
+        {services?.length === 0 && (
+          <p className="text-gray-500 italic">Aucun service créé pour l'instant.</p>
+        )}
       </div>
     </div>
   );
