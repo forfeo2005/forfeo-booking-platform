@@ -36,8 +36,7 @@ export default function Services() {
             <label className="block text-sm font-medium mb-1">Nom</label>
             <input 
               value={name} onChange={(e) => setName(e.target.value)}
-              className="border rounded p-2 w-full" 
-              placeholder="Ex: Consultation" required
+              className="border rounded p-2 w-full" placeholder="Ex: Consultation" required
             />
           </div>
           <div className="w-32">
@@ -47,11 +46,8 @@ export default function Services() {
               className="border rounded p-2 w-full" required
             />
           </div>
-          <button 
-            type="submit" disabled={createService.isPending} 
-            className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 font-medium h-[42px]"
-          >
-            {createService.isPending ? "..." : "Ajouter"}
+          <button type="submit" disabled={createService.isPending} className="bg-blue-600 text-white px-6 py-2 rounded font-medium h-[42px]">
+            Ajouter
           </button>
         </form>
       </div>
@@ -67,4 +63,4 @@ export default function Services() {
     </div>
   );
 }
-// Fix v2
+// Fix Final v3
