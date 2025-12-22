@@ -1,29 +1,34 @@
+import { router, publicProcedure, protectedProcedure } from "../trpc";
 import { z } from "zod";
-import { router, protectedProcedure } from "../trpc";
 import { services } from "@shared/schema";
 import { db } from "../db";
 import { eq } from "drizzle-orm";
 
 export const serviceRouter = router({
-  // Lister tous les services de ton entreprise
-  list: protectedProcedure.query(async ({ ctx }) => {
-    return await db.select().from(services).where(eq(services.organizationId, ctx.user.organizationId));
-  }),
-
-  // Créer un nouveau service
+  // C'est cette fonction "create" que ton site cherche !
   create: protectedProcedure
     .input(z.object({
       name: z.string(),
-      price: z.number(),
-      duration: z.number(),
+      description: z.string().optional(),
+      price: z.coerce.number(),
+      duration: z.coerce.number(),
+      category: z.string().optional(),
     }))
-    .mutation(async ({ ctx, input }) => {
-      await db.insert(services).values({
-        name: input.name,
-        price: input.price,
-        duration: input.duration,
+    .mutation(async ({ input, ctx }) => {
+      // On insère le service lié à l'organisation de l'utilisateur
+      const [service] = await db.insert(services).values({
+        ...input,
         organizationId: ctx.user.organizationId,
-      });
-      return { success: true };
+        isActive: true,
+      }).returning();
+      
+      return service;
     }),
+
+  // Pour lister les services (utile pour l'affichage)
+  list: protectedProcedure.query(async ({ ctx }) => {
+    return await db.select()
+      .from(services)
+      .where(eq(services.organizationId, ctx.user.organizationId));
+  }),
 });
