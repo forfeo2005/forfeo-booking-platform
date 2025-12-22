@@ -29,6 +29,11 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 
 async function startServer() {
   const app = express();
+
+  // ✅ IMPORTANT sur Railway/Reverse Proxy : permet à Express de lire correctement https + IP
+  // (sinon cookies secure/samesite peuvent mal se comporter)
+  app.set("trust proxy", 1);
+
   const server = createServer(app);
 
   // Initialize Socket.io for real-time chat
@@ -48,7 +53,7 @@ async function startServer() {
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
-  // OAuth callback under /api/oauth/callback
+  // OAuth callback under /api/oauth/callback + /api/oauth/login + /api/oauth/logout
   registerOAuthRoutes(app);
 
   // tRPC API
