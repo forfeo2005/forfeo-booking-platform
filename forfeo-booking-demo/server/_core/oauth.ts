@@ -1,60 +1,72 @@
 import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import type { Express, Request, Response } from "express";
-import { getSessionCookieOptions } from "./cookies";
-import { sdk } from "./sdk";
 import * as db from "../db";
+import { getSessionCookieOptions } from "./cookies";
+import { ENV } from "./env";
+import { sdk } from "./sdk";
 
 function getQueryParam(req: Request, key: string): string | undefined {
   const value = req.query[key];
   return typeof value === "string" ? value : undefined;
 }
 
-function getCookieParam(req: Request, key: string): string | undefined {
-  const header = req.headers.cookie || "";
-  const match = header.match(new RegExp(`(?:^|; )${key}=([^;]*)`));
-  return match ? decodeURIComponent(match[1]) : undefined;
+function getPublicBaseUrl(req: Request) {
+  const proto =
+    (req.headers["x-forwarded-proto"] as string | undefined) ||
+    req.protocol ||
+    "http";
+  const host =
+    (req.headers["x-forwarded-host"] as string | undefined) ||
+    req.get("host") ||
+    "localhost";
+  return `${proto}://${host}`;
 }
 
-function setCookie(res: Response, name: string, value: string, req: Request, maxAgeMs: number) {
-  const cookieOptions = getSessionCookieOptions(req);
-  res.cookie(name, value, { ...cookieOptions, maxAge: maxAgeMs });
+// IMPORTANT: on prend l’ORIGIN du serveur OAuth (pas les paths gRPC)
+function getOAuthOrigin() {
+  try {
+    return new URL(ENV.oAuthServerUrl).origin;
+  } catch {
+    return ENV.oAuthServerUrl;
+  }
 }
 
 export function registerOAuthRoutes(app: Express) {
   /**
-   * ✅ LOGIN: ton front fait window.location.href = "/api/oauth/login"
-   * Ici on génère un "state", on le stocke en cookie, puis on redirige vers l'URL OAuth.
+   * 1) LOGIN => redirige vers la page d’autorisation OAuth
+   * GET /api/oauth/login
    */
   app.get("/api/oauth/login", async (req: Request, res: Response) => {
-    try {
-      const state = crypto.randomUUID();
-
-      // garde le state 10 minutes (anti-CSRF)
-      setCookie(res, "oauth_state", state, req, 10 * 60 * 1000);
-
-      // ⚠️ Selon ton sdk, la fonction peut s'appeler différemment.
-      // On essaye plusieurs noms sans faire planter TS.
-      const anySdk = sdk as any;
-      const getAuthUrl =
-        anySdk.getAuthorizationUrl ||
-        anySdk.getAuthorizeUrl ||
-        anySdk.getLoginUrl ||
-        anySdk.getAuthUrl;
-
-      if (!getAuthUrl) {
-        return res.status(500).send("SDK OAuth: aucune fonction pour générer l'URL d'autorisation (getAuthorizationUrl/getAuthorizeUrl/...)");
-      }
-
-      const url: string = await getAuthUrl.call(anySdk, state);
-      return res.redirect(302, url);
-    } catch (error) {
-      console.error("[OAuth] Login failed", error);
-      return res.status(500).send("OAuth login failed");
+    if (!ENV.oAuthServerUrl || !ENV.appId) {
+      res
+        .status(500)
+        .send("OAuth non configuré: OAUTH_SERVER_URL ou APP_ID manquant.");
+      return;
     }
+
+    const baseUrl = getPublicBaseUrl(req);
+    const redirectUri = `${baseUrl}/api/oauth/callback`;
+
+    // Ton SDK décode le state via atob(state) pour retrouver redirectUri :contentReference[oaicite:2]{index=2}
+    // Donc on encode redirectUri en base64 standard.
+    const state = Buffer.from(redirectUri, "utf8").toString("base64");
+
+    // URL d’autorisation (standard “authorize”)
+    // NOTE: si ton fournisseur a un autre path, change "/oauth/authorize".
+    const authorizeUrl = new URL("/oauth/authorize", getOAuthOrigin());
+    authorizeUrl.searchParams.set("clientId", ENV.appId);
+    authorizeUrl.searchParams.set("redirectUri", redirectUri);
+    authorizeUrl.searchParams.set("responseType", "code");
+    authorizeUrl.searchParams.set("state", state);
+    // optionnel (au besoin)
+    authorizeUrl.searchParams.set("scope", "openid email profile");
+
+    res.redirect(302, authorizeUrl.toString());
   });
 
   /**
-   * ✅ CALLBACK: ton code actuel, avec un check de state en plus
+   * 2) CALLBACK => échange code -> token -> userInfo -> cookie session
+   * GET /api/oauth/callback
    */
   app.get("/api/oauth/callback", async (req: Request, res: Response) => {
     const code = getQueryParam(req, "code");
@@ -62,13 +74,6 @@ export function registerOAuthRoutes(app: Express) {
 
     if (!code || !state) {
       res.status(400).json({ error: "code and state are required" });
-      return;
-    }
-
-    // ✅ Vérifie que le state match celui qu'on a mis en cookie au /login
-    const expectedState = getCookieParam(req, "oauth_state");
-    if (expectedState && expectedState !== state) {
-      res.status(400).json({ error: "invalid state" });
       return;
     }
 
@@ -94,12 +99,11 @@ export function registerOAuthRoutes(app: Express) {
         expiresInMs: ONE_YEAR_MS,
       });
 
-      // ✅ Cookie session (1 an)
       const cookieOptions = getSessionCookieOptions(req);
-      res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
-
-      // ✅ on peut nettoyer oauth_state
-      res.clearCookie("oauth_state", { path: "/" });
+      res.cookie(COOKIE_NAME, sessionToken, {
+        ...cookieOptions,
+        maxAge: ONE_YEAR_MS,
+      });
 
       res.redirect(302, "/");
     } catch (error) {
@@ -109,11 +113,12 @@ export function registerOAuthRoutes(app: Express) {
   });
 
   /**
-   * ✅ LOGOUT: supprime la session
+   * 3) LOGOUT => supprime le cookie
+   * GET /api/oauth/logout
    */
-  app.post("/api/oauth/logout", async (req: Request, res: Response) => {
+  app.get("/api/oauth/logout", async (req: Request, res: Response) => {
     const cookieOptions = getSessionCookieOptions(req);
-    res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: 0 });
-    return res.json({ ok: true });
+    res.clearCookie(COOKIE_NAME, cookieOptions);
+    res.redirect(302, "/");
   });
 }
