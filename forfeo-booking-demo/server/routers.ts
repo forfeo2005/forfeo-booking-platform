@@ -1,16 +1,11 @@
-import { router, publicProcedure } from "./_core/trpc";
-import { systemRouter } from "./_core/systemRouter";
+import { router } from "./_core/trpc";
+import { authRouter } from "./_core/routers/auth";
 import { bookingsRouter } from "./_core/routers/bookings";
 
+// C'est ici qu'on assemble les "briques" de ton API
 export const appRouter = router({
-  auth: router({
-    me: publicProcedure.query(({ ctx }) => {
-      return ctx.user; // ✅ null si pas connecté
-    }),
-  }),
-
-  system: systemRouter,
-  bookings: bookingsRouter,
+  auth: authRouter,         // Active les routes trpc.auth.login, signup, me...
+  bookings: bookingsRouter, // Active les routes trpc.bookings.list...
 });
 
 export type AppRouter = typeof appRouter;
