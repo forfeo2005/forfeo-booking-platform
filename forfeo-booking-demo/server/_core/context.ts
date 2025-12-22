@@ -1,46 +1,58 @@
 import type { CreateExpressContextOptions } from "@trpc/server/adapters/express";
 import type { User } from "../../drizzle/schema";
 import { db } from "./db";
+import { parse as parseCookie } from "cookie";
 import { jwtVerify } from "jose";
-import cookie from "cookie";
 
 export type TrpcContext = {
   req: CreateExpressContextOptions["req"];
   res: CreateExpressContextOptions["res"];
-  user?: User | null;
+  user: User | null; // ✅ plus de fakeUser obligatoire
   db: typeof db;
 };
 
-const COOKIE_NAME = "forfeo_session";
+type SessionPayload = {
+  id: string;
+  email: string;
+  name: string;
+  role: "ADMIN" | "USER";
+};
 
-async function getUserFromRequest(req: CreateExpressContextOptions["req"]) {
-  const header = req.headers.cookie;
-  if (!header) return null;
+function getJwtSecretKey() {
+  const secret = process.env.JWT_SECRET;
+  // ⚠️ En prod, JWT_SECRET doit être défini dans Railway
+  const effective = secret && secret.length > 15 ? secret : "DEV_CHANGE_ME_PLEASE";
+  return new TextEncoder().encode(effective);
+}
 
-  const parsed = cookie.parse(header);
-  const token = parsed[COOKIE_NAME];
+async function readUserFromSessionCookie(
+  req: CreateExpressContextOptions["req"]
+): Promise<User | null> {
+  const cookieHeader = req.headers.cookie;
+  if (!cookieHeader) return null;
+
+  const cookies = parseCookie(cookieHeader);
+  const token = cookies["forfeo_session"];
   if (!token) return null;
 
-  const secret = process.env.JWT_SECRET;
-  if (!secret) return null;
-
   try {
-    const { payload } = await jwtVerify(
-      token,
-      new TextEncoder().encode(secret)
-    );
+    const { payload } = await jwtVerify(token, getJwtSecretKey());
+    const p = payload as unknown as SessionPayload;
 
-    const userId = payload.sub;
-    if (!userId) return null;
+    if (!p?.id || !p?.email || !p?.name || !p?.role) return null;
 
-    // Ajuste ici si ton drizzle schema utilise un autre nom (users / user / etc.)
-    // Exemple (si tu as une table users):
-    // const user = await db.query.users.findFirst({ where: (u, { eq }) => eq(u.id, String(userId)) });
-    // return user ?? null;
+    // ✅ On reconstruit un User minimal compatible avec ton type User
+    const now = new Date();
+    const user: User = {
+      id: p.id,
+      email: p.email,
+      name: p.name,
+      role: p.role, // "ADMIN" ou "USER"
+      createdAt: now,
+      updatedAt: now,
+    };
 
-    // TEMP: si tu n’as pas encore la table users branchée, retourne null
-    // (et tu brancheras la query juste après)
-    return null;
+    return user;
   } catch {
     return null;
   }
@@ -49,21 +61,27 @@ async function getUserFromRequest(req: CreateExpressContextOptions["req"]) {
 export async function createContext(
   opts: CreateExpressContextOptions
 ): Promise<TrpcContext> {
-  // ✅ Bypass DEV optionnel (pratique au début)
-  const devBypass = process.env.DEV_AUTH_BYPASS === "1";
-  if (devBypass) {
-    const fakeUser = {
+  // ✅ "DEV_AUTH_BYPASS=1" permet de bypass login en dev (facultatif)
+  const bypass = process.env.DEV_AUTH_BYPASS === "1";
+  if (bypass) {
+    const now = new Date();
+    const fakeUser: User = {
       id: "dev-user-1",
       email: "dev@forfeo.com",
       name: "Forfeo Dev",
       role: "ADMIN",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    } as User;
+      createdAt: now,
+      updatedAt: now,
+    };
 
     return { req: opts.req, res: opts.res, user: fakeUser, db };
   }
 
-  const user = await getUserFromRequest(opts.req);
-  return { req: opts.req, res: opts.res, user, db };
+  const user = await readUserFromSessionCookie(opts.req);
+  return {
+    req: opts.req,
+    res: opts.res,
+    user,
+    db,
+  };
 }
