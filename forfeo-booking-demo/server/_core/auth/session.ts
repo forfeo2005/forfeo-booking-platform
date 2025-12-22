@@ -32,23 +32,16 @@ export async function getSessionFromRequest(req: Request) {
   const token = req.cookies[SESSION_COOKIE_NAME];
   if (!token) return null;
 
+  // --- DEBUT DU REMPLACEMENT ---
   const result = await db
     .select({
-      session: {
-        id: sessions.id,
-        userId: sessions.userId,
-        activeOrgId: sessions.activeOrgId,
-        expiresAt: sessions.expiresAt,
-        created_at: sessions.createdAt, // Drizzle mappe souvent createdAt vers created_at
-      },
-      user: {
-        id: users.id,
-        email: users.email,
-        name: users.name,
-        role: users.role,
-        created_at: users.createdAt,
-        updated_at: users.updatedAt,
-      },
+      sessionId: sessions.id,
+      sessionUserId: sessions.userId,
+      activeOrgId: sessions.activeOrgId,
+      expiresAt: sessions.expiresAt,
+      userName: users.name,
+      userEmail: users.email,
+      userId: users.id
     })
     .from(sessions)
     .innerJoin(users, eq(sessions.userId, users.id))
@@ -57,10 +50,22 @@ export async function getSessionFromRequest(req: Request) {
 
   if (result.length === 0) return null;
 
-  const { session, user } = result[0];
+  const row = result[0];
+  const session = { 
+    id: row.sessionId, 
+    userId: row.sessionUserId, 
+    activeOrgId: row.activeOrgId, 
+    expiresAt: row.expiresAt as Date 
+  };
+  const user = { 
+    id: row.userId, 
+    name: row.userName, 
+    email: row.userEmail 
+  };
+  // --- FIN DU REMPLACEMENT ---
 
-  // Vérification de l'expiration
-  if (new Date() > (session.expiresAt as Date)) {
+  // Check expiration
+  if (new Date() > session.expiresAt) {
     await destroySession(token);
     return null;
   }
