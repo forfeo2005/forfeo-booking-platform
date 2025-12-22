@@ -1,38 +1,11 @@
-import { router, publicProcedure } from "./_core/trpc";
-import { COOKIE_NAME } from "@shared/const";
-import { getSessionCookieOptions } from "./_core/cookies";
+import { router } from "./_core/trpc";
+import { authRouter } from "./_core/routers/auth";
+import { bookingsRouter } from "./_core/routers/bookings";
 
-/**
- * Router principal de l'application
- */
+// C'est ici qu'on assemble les "briques" de ton API
 export const appRouter = router({
-  /**
-   * AUTH
-   */
-  auth: router({
-    /**
-     * Toujours retourner un user en DEV
-     */
-    me: publicProcedure.query(({ ctx }) => {
-      return (
-        ctx.user ?? {
-          id: "dev-user-1",
-          email: "dev@forfeo.com",
-          name: "Forfeo Dev",
-          role: "ADMIN",
-        }
-      );
-    }),
-
-    /**
-     * Logout
-     */
-    logout: publicProcedure.mutation(({ ctx }) => {
-      const cookieOptions = getSessionCookieOptions(ctx.req);
-      ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
-      return { success: true };
-    }),
-  }),
+  auth: authRouter,         // Active les routes trpc.auth.login, signup, me...
+  bookings: bookingsRouter, // Active les routes trpc.bookings.list...
 });
 
 export type AppRouter = typeof appRouter;

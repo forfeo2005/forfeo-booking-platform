@@ -1,31 +1,32 @@
 import type { CreateExpressContextOptions } from "@trpc/server/adapters/express";
-import type { User } from "../../drizzle/schema";
 import { db } from "./db";
+import { getSessionFromRequest } from "./auth/session"; // Notre helper créé à l'étape 3
+import type { User } from "../../drizzle/schema";
 
 export type TrpcContext = {
   req: CreateExpressContextOptions["req"];
   res: CreateExpressContextOptions["res"];
-  user: User; // (en dev on garde le user fake)
+  user: User | null;
+  orgId: number | null; // ID numérique maintenant (MySQL serial)
+  sessionId: string | null;
   db: typeof db;
 };
 
 export async function createContext(
   opts: CreateExpressContextOptions
 ): Promise<TrpcContext> {
-  // 🔐 AUTH DEV SIMULÉE
-  const fakeUser: User = {
-    id: "dev-user-1",
-    email: "dev@forfeo.com",
-    name: "Forfeo Dev",
-    role: "ADMIN",
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
+  const { req, res } = opts;
+
+  // Récupère la session depuis la DB via le cookie (cookie-parser doit être actif dans index.ts)
+  const sessionData = await getSessionFromRequest(req);
 
   return {
-    req: opts.req,
-    res: opts.res,
-    user: fakeUser,
+    req,
+    res,
     db,
+    user: sessionData ? sessionData.user : null,
+    // On attache l'ID de l'organisation active au contexte pour le filtrage multi-tenant
+    orgId: sessionData?.session.activeOrgId || null,
+    sessionId: sessionData?.session.id || null,
   };
 }
