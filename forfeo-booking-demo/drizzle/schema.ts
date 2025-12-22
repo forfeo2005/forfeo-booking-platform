@@ -27,7 +27,7 @@ export const users = mysqlTable("users", {
   email: varchar("email", { length: 255 }).notNull(),
   passwordHash: varchar("password_hash", { length: 255 }).notNull(),
   name: varchar("name", { length: 255 }),
-  role: varchar("role", { length: 50 }).default("USER"), // "ADMIN" ou "USER"
+  role: varchar("role", { length: 50 }).default("USER"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow(),
 }, (t) => ({
@@ -38,27 +38,27 @@ export const memberships = mysqlTable("memberships", {
   id: serial("id").primaryKey(),
   userId: int("user_id").notNull(),
   orgId: int("org_id").notNull(),
-  role: varchar("role", { length: 50 }).default("MEMBER"), // "OWNER", "ADMIN", "MEMBER"
+  role: varchar("role", { length: 50 }).default("MEMBER"),
   createdAt: timestamp("created_at").defaultNow(),
 }, (t) => ({
   userOrgIdx: index("user_org_idx").on(t.userId, t.orgId),
 }));
 
 export const sessions = mysqlTable("sessions", {
-  id: varchar("id", { length: 255 }).primaryKey(), // Token de session
+  id: varchar("id", { length: 255 }).primaryKey(),
   userId: int("user_id").notNull(),
-  activeOrgId: int("active_org_id"), // L'organisation contextuelle
+  activeOrgId: int("active_org_id"),
   expiresAt: timestamp("expires_at").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
 /* =========================================================
-   SERVICES (Scoped by Org)
+   SERVICES
 ========================================================= */
 
 export const services = mysqlTable("services", {
   id: serial("id").primaryKey(),
-  orgId: int("org_id").notNull(), // Multi-tenant link
+  orgId: int("org_id").notNull(),
   title: varchar("title", { length: 255 }).notNull(),
   description: text("description"),
   durationMinutes: int("duration_minutes").notNull(),
@@ -88,18 +88,18 @@ export const availabilitySlots = mysqlTable("availability_slots", {
 export const recurringSchedules = mysqlTable("recurring_schedules", {
   id: serial("id").primaryKey(),
   serviceId: int("service_id").notNull(),
-  dayOfWeek: int("day_of_week").notNull(), // 0 = dimanche
+  dayOfWeek: int("day_of_week").notNull(),
   startHour: int("start_hour").notNull(),
   endHour: int("end_hour").notNull(),
 });
 
 /* =========================================================
-   CUSTOMERS (Scoped by Org)
+   CUSTOMERS
 ========================================================= */
 
 export const customers = mysqlTable("customers", {
   id: serial("id").primaryKey(),
-  orgId: int("org_id").notNull(), // Multi-tenant link
+  orgId: int("org_id").notNull(),
   email: varchar("email", { length: 255 }).notNull(),
   name: varchar("name", { length: 255 }).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
@@ -108,15 +108,15 @@ export const customers = mysqlTable("customers", {
 }));
 
 /* =========================================================
-   BOOKINGS (Scoped by Org)
+   BOOKINGS
 ========================================================= */
 
 export const bookings = mysqlTable("bookings", {
   id: serial("id").primaryKey(),
-  orgId: int("org_id").notNull(), // Multi-tenant link
+  orgId: int("org_id").notNull(),
   serviceId: int("service_id").notNull(),
   customerId: int("customer_id").notNull(),
-  slotId: int("slot_id"), // Nullable si réservation hors slot prédéfini
+  slotId: int("slot_id"),
   status: varchar("status", { length: 50 }).notNull().default("CONFIRMED"),
   createdAt: timestamp("created_at").defaultNow(),
 }, (t) => ({
@@ -124,33 +124,33 @@ export const bookings = mysqlTable("bookings", {
 }));
 
 /* =========================================================
-   REVIEWS ⭐
+   REVIEWS
 ========================================================= */
 
 export const reviews = mysqlTable("reviews", {
   id: serial("id").primaryKey(),
   serviceId: int("service_id").notNull(),
   customerId: int("customer_id").notNull(),
-  rating: int("rating").notNull(), // 1 à 5
+  rating: int("rating").notNull(),
   comment: text("comment"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
 /* =========================================================
-   CHAT MESSAGES 💬
+   CHAT MESSAGES
 ========================================================= */
 
 export const chatMessages = mysqlTable("chat_messages", {
   id: serial("id").primaryKey(),
-  orgId: int("org_id").notNull(), // Utile pour récupérer tous les chats d'une org
+  orgId: int("org_id").notNull(),
   bookingId: int("booking_id").notNull(),
-  senderId: varchar("sender_id", { length: 255 }).notNull(), // Peut être un User ID ou Customer ID
+  senderId: varchar("sender_id", { length: 255 }).notNull(),
   message: text("message").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
 /* =========================================================
-   NOTIFICATION LOGS 🔔
+   NOTIFICATION LOGS
 ========================================================= */
 
 export const notificationLogs = mysqlTable("notification_logs", {
@@ -162,7 +162,7 @@ export const notificationLogs = mysqlTable("notification_logs", {
 });
 
 /* =========================================================
-   RELATIONS (Drizzle Relations)
+   RELATIONS
 ========================================================= */
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -205,21 +205,5 @@ export const customersRelations = relations(customers, ({ one, many }) => ({
   bookings: many(bookings),
 }));
 
-/* =========================================================
-   TYPES EXPORTS
-========================================================= */
-
 export type User = InferSelectModel<typeof users>;
 export type InsertUser = InferInsertModel<typeof users>;
-
-export type Organization = InferSelectModel<typeof organizations>;
-export type InsertOrganization = InferInsertModel<typeof organizations>;
-
-export type Service = InferSelectModel<typeof services>;
-export type InsertService = InferInsertModel<typeof services>;
-
-export type Booking = InferSelectModel<typeof bookings>;
-export type InsertBooking = InferInsertModel<typeof bookings>;
-
-export type Customer = InferSelectModel<typeof customers>;
-export type InsertCustomer = InferInsertModel<typeof customers>;
