@@ -4,7 +4,7 @@ import { services } from "@shared/schema";
 import { db } from "../db";
 import { eq } from "drizzle-orm";
 
-// === FORCE REBUILD VERSION 2000 === 🚀
+// VERSION_CLEAN_INSERT_V2001 🚀
 export const serviceRouter = router({
   create: protectedProcedure
     .input(z.object({
@@ -15,9 +15,13 @@ export const serviceRouter = router({
       category: z.string().optional(),
     }))
     .mutation(async ({ input, ctx }) => {
-      // ON A SUPPRIMÉ .returning() POUR ÉVITER L'ERREUR DB
+      // On prépare l'objet proprement sans laisser la DB deviner les IDs
       await db.insert(services).values({
-        ...input,
+        name: input.name,
+        description: input.description || "",
+        price: input.price,
+        duration: input.duration,
+        category: input.category || "Général",
         organizationId: ctx.user.organizationId,
         isActive: true,
       });
