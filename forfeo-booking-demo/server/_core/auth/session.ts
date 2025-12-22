@@ -1,6 +1,6 @@
-import { db } from '../../db'; // Assure-toi que ce chemin pointe vers ton init drizzle
+import { db } from '../../db'; 
 import { sessions, users, memberships } from '../../../drizzle/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { randomBytes } from 'crypto';
 import type { Request, Response } from 'express';
 
@@ -35,8 +35,21 @@ export async function getSessionFromRequest(req: Request) {
 
   const result = await db
     .select({
-      session: sessions,
-      user: users,
+      session: {
+        id: sessions.id,
+        userId: sessions.userId,
+        activeOrgId: sessions.activeOrgId,
+        expiresAt: sessions.expiresAt,
+        createdAt: sessions.createdAt,
+      },
+      user: {
+        id: users.id,
+        email: users.email,
+        name: users.name,
+        role: users.role,
+        createdAt: users.createdAt,
+        updatedAt: users.updatedAt,
+      },
     })
     .from(sessions)
     .innerJoin(users, eq(sessions.userId, users.id))
