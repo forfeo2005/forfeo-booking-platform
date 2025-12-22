@@ -1,10 +1,12 @@
 import { router } from "../trpc";
 import { authRouter } from "./auth";
-import { serviceRouter } from "./service"; // <--- Import du nouveau fichier
+import { serviceRouter } from "./service"; 
 
 export const appRouter = router({
   auth: authRouter,
-  service: serviceRouter, // <--- Activation
+  service: serviceRouter, 
 });
 
 export type AppRouter = typeof appRouter;
+
+// FORCER LE DEPLOIEMENT V2 🚀
