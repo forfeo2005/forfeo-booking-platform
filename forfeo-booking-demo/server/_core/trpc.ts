@@ -31,7 +31,7 @@ export const adminProcedure = t.procedure.use(
   t.middleware(async (opts) => {
     const { ctx, next } = opts;
 
-    // ✅ IMPORTANT: ton user fake = role "ADMIN"
+    // ✅ IMPORTANT: role doit être "ADMIN" (comme ton code)
     if (!ctx.user || ctx.user.role !== "ADMIN") {
       throw new TRPCError({ code: "FORBIDDEN", message: NOT_ADMIN_ERR_MSG });
     }
