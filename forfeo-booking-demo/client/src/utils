@@ -1,7 +1,0 @@
-// Fichier: client/src/utils/trpc.ts
-import { createTRPCReact } from '@trpc/react-query';
-// ⚠️ Important : ce chemin doit pointer vers ton fichier server/routers.ts
-// Ajuste le nombre de "../" selon ta structure réelle si besoin.
-import type { AppRouter } from '../../../server/routers';
-
-export const trpc = createTRPCReact<AppRouter>();
