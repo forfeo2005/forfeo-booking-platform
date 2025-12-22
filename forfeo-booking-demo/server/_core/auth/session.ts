@@ -12,7 +12,6 @@ export async function createSession(userId: number, orgId?: number) {
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + EXPIRE_DAYS);
 
-  // Si pas d'orgId spécifié, on essaie d'en trouver un par défaut
   let activeOrgId = orgId;
   if (!activeOrgId) {
     const mems = await db.select().from(memberships).where(eq(memberships.userId, userId)).limit(1);
@@ -40,15 +39,15 @@ export async function getSessionFromRequest(req: Request) {
         userId: sessions.userId,
         activeOrgId: sessions.activeOrgId,
         expiresAt: sessions.expiresAt,
-        createdAt: sessions.createdAt,
+        created_at: sessions.createdAt, // Drizzle mappe souvent createdAt vers created_at
       },
       user: {
         id: users.id,
         email: users.email,
         name: users.name,
         role: users.role,
-        createdAt: users.createdAt,
-        updatedAt: users.updatedAt,
+        created_at: users.createdAt,
+        updated_at: users.updatedAt,
       },
     })
     .from(sessions)
@@ -60,8 +59,8 @@ export async function getSessionFromRequest(req: Request) {
 
   const { session, user } = result[0];
 
-  // Check expiration
-  if (new Date() > session.expiresAt) {
+  // Vérification de l'expiration
+  if (new Date() > (session.expiresAt as Date)) {
     await destroySession(token);
     return null;
   }
@@ -83,7 +82,7 @@ export function setSessionCookie(res: Response, token: string) {
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
     path: '/',
-    maxAge: 1000 * 60 * 60 * 24 * EXPIRE_DAYS, // 30 jours
+    maxAge: 1000 * 60 * 60 * 24 * EXPIRE_DAYS, 
   });
 }
 
