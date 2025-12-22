@@ -4,7 +4,7 @@ import { services } from "@shared/schema";
 import { db } from "../db";
 import { eq } from "drizzle-orm";
 
-// VERSION_CLEAN_INSERT_V2001 🚀
+// VERSION_SQLITE_COMPATIBLE_V2002 🚀
 export const serviceRouter = router({
   create: protectedProcedure
     .input(z.object({
@@ -15,7 +15,8 @@ export const serviceRouter = router({
       category: z.string().optional(),
     }))
     .mutation(async ({ input, ctx }) => {
-      // On prépare l'objet proprement sans laisser la DB deviner les IDs
+      // On liste uniquement les colonnes de données. 
+      // On ne mentionne PAS 'id' pour laisser l'auto-incrément fonctionner.
       await db.insert(services).values({
         name: input.name,
         description: input.description || "",
