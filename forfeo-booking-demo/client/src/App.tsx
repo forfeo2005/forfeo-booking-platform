@@ -1,24 +1,16 @@
 import { Route, Switch } from "wouter";
+import Home from "./Home";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
 
-import Home from "@/pages/Home";
-import Bookings from "@/pages/Bookings";
-import Services from "@/pages/Services";
-import Customers from "@/pages/Customers";
-import Chat from "@/pages/Chat";
-import NotFound from "@/pages/NotFound";
-
-export default function App() {
+function App() {
   return (
     <Switch>
+      <Route path="/login" component={Login} />
+      <Route path="/signup" component={Signup} />
       <Route path="/" component={Home} />
-
-      <Route path="/bookings" component={Bookings} />
-      <Route path="/services" component={Services} />
-      <Route path="/customers" component={Customers} />
-      <Route path="/chat" component={Chat} />
-
-      {/* Fallback si aucune route match */}
-      <Route component={NotFound} />
+      {/* Autres routes */}
     </Switch>
   );
 }
+export default App;
