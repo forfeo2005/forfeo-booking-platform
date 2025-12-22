@@ -1,72 +1,64 @@
-import { randomUUID } from "crypto";
 import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import type { Express, Request, Response } from "express";
 import * as db from "../db";
 import { getSessionCookieOptions } from "./cookies";
 import { sdk } from "./sdk";
 
-function getBaseUrl(req: Request) {
-  // Avec app.set("trust proxy", 1) dans index.ts, req.protocol devrait être "https" sur Railway
-  const proto = req.header("x-forwarded-proto") ?? req.protocol;
-  const host = req.header("x-forwarded-host") ?? req.get("host");
-  return `${proto}://${host}`;
-}
-
-function mustEnv(name: string) {
-  const v = process.env[name];
-  if (!v) throw new Error(`Missing env var: ${name}`);
-  return v;
+function getQueryParam(req: Request, key: string): string | undefined {
+  const value = req.query[key];
+  return typeof value === "string" ? value : undefined;
 }
 
 export function registerOAuthRoutes(app: Express) {
   /**
-   * ✅ LOGIN
-   * /api/oauth/login -> redirect vers le vrai serveur OAuth (OAUTH_SERVER_URL)
+   * ✅ LOGIN (DEV / STAGING)
+   * Crée une session locale et redirige vers /
+   * Ça évite de dépendre d'un serveur OAuth externe pour l'instant.
    */
   app.get("/api/oauth/login", async (req: Request, res: Response) => {
     try {
-      // IMPORTANT: doit être un domaine externe (pas ton app)
-      const oauthServerUrl = mustEnv("OAUTH_SERVER_URL");
+      const openId = "dev-user-1";
+      const name = "Forfeo Dev";
+      const email = "dev@forfeo.com";
 
-      // Ton clientId (dans ta capture c’est "forfeo-booking-app")
-      const clientId =
-        process.env.OAUTH_CLIENT_ID ??
-        process.env.APP_ID ??
-        "forfeo-booking-app";
-
-      // Callback vers ton app
-      const redirectUri = `${getBaseUrl(req)}/api/oauth/callback`;
-
-      // État (anti-CSRF). On le garde en cookie.
-      const state = randomUUID();
-
-      const cookieOptions = getSessionCookieOptions(req);
-      res.cookie("oauth_state", state, {
-        ...cookieOptions,
-        maxAge: 10 * 60 * 1000, // 10 min
+      await db.upsertUser({
+        openId,
+        name,
+        email,
+        loginMethod: "DEV",
+        lastSignedIn: new Date(),
       });
 
-      // ✅ URL d’autorisation (EXTERNE)
-      const authorizeUrl =
-        `${oauthServerUrl.replace(/\/$/, "")}/oauth/authorize` +
-        `?clientId=${encodeURIComponent(clientId)}` +
-        `&redirectUri=${encodeURIComponent(redirectUri)}` +
-        `&state=${encodeURIComponent(state)}`;
+      const sessionToken = await sdk.createSessionToken(openId, {
+        name,
+        expiresInMs: ONE_YEAR_MS,
+      });
 
-      return res.redirect(302, authorizeUrl);
+      const cookieOptions = getSessionCookieOptions(req);
+      res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
+
+      res.redirect(302, "/");
     } catch (error) {
-      console.error("[OAuth] Login failed", error);
-      return res.status(500).send("OAuth login failed");
+      console.error("[OAuth] DEV login failed", error);
+      res.status(500).send("Login failed");
     }
   });
 
   /**
-   * ✅ CALLBACK
-   * Le provider renvoie ici avec ?code=...&state=...
+   * ✅ LOGOUT
+   */
+  app.get("/api/oauth/logout", async (req: Request, res: Response) => {
+    const cookieOptions = getSessionCookieOptions(req);
+    res.clearCookie(COOKIE_NAME, cookieOptions);
+    res.redirect(302, "/");
+  });
+
+  /**
+   * ✅ CALLBACK (si plus tard tu branches un vrai OAuth)
    */
   app.get("/api/oauth/callback", async (req: Request, res: Response) => {
-    const code = typeof req.query.code === "string" ? req.query.code : undefined;
-    const state = typeof req.query.state === "string" ? req.query.state : undefined;
+    const code = getQueryParam(req, "code");
+    const state = getQueryParam(req, "state");
 
     if (!code || !state) {
       res.status(400).json({ error: "code and state are required" });
@@ -96,25 +88,12 @@ export function registerOAuthRoutes(app: Express) {
       });
 
       const cookieOptions = getSessionCookieOptions(req);
-      res.cookie(COOKIE_NAME, sessionToken, {
-        ...cookieOptions,
-        maxAge: ONE_YEAR_MS,
-      });
+      res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
 
-      // retour home
       res.redirect(302, "/");
     } catch (error) {
       console.error("[OAuth] Callback failed", error);
       res.status(500).json({ error: "OAuth callback failed" });
     }
-  });
-
-  /**
-   * (optionnel) LOGOUT
-   */
-  app.get("/api/oauth/logout", async (req: Request, res: Response) => {
-    const cookieOptions = getSessionCookieOptions(req);
-    res.clearCookie(COOKIE_NAME, cookieOptions);
-    res.redirect(302, "/");
   });
 }
