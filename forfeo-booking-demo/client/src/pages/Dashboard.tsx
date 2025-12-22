@@ -10,11 +10,8 @@ export default function Dashboard() {
         <p className="text-lg text-gray-700">
           Bonjour <strong>{authData?.user?.name}</strong>, bienvenue dans votre espace de gestion.
         </p>
-        <p className="text-gray-500 mt-2">
-          Utilisez le menu de gauche pour gérer vos services et vos réservations.
-        </p>
       </div>
     </div>
   );
 }
-// Fix v2
+// Fix Final v3
