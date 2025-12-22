@@ -1,45 +1,19 @@
-import { trpc } from "@/lib/trpc";
-import { useLocation } from "wouter";
-import { getLoginUrl } from "@/const";
+import { trpc } from "../utils/trpc";
 
 export default function Dashboard() {
-  const [, setLocation] = useLocation();
-  const { data: user, isLoading, isError } = trpc.auth.me.useQuery();
+  const { data: authData } = trpc.auth.me.useQuery();
 
-  // ⏳ Chargement
-  if (isLoading) {
-    return <p style={{ padding: 32 }}>Chargement...</p>;
-  }
-
-  // 🔒 Non connecté → redirection
-  if (isError || !user) {
-    // 👉 redirection propre (pas de side-effect direct dans le render)
-    setTimeout(() => {
-      window.location.href = getLoginUrl();
-    }, 0);
-
-    return null;
-  }
-
-  // ✅ Connecté
   return (
-    <div style={{ padding: 32 }}>
-      <h1>Dashboard</h1>
-      <p>
-        Bienvenue <strong>{user.name}</strong>
-      </p>
-
-      <pre
-        style={{
-          background: "#111",
-          color: "#0f0",
-          padding: 16,
-          borderRadius: 8,
-          marginTop: 16,
-        }}
-      >
-        {JSON.stringify(user, null, 2)}
-      </pre>
+    <div className="space-y-6">
+      <h1 className="text-3xl font-bold text-gray-900">Tableau de Bord</h1>
+      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+        <p className="text-lg text-gray-700">
+          Bonjour <strong>{authData?.user?.name}</strong>, bienvenue dans votre espace de gestion.
+        </p>
+        <p className="text-gray-500 mt-2">
+          Utilisez le menu de gauche pour gérer vos services et vos réservations.
+        </p>
+      </div>
     </div>
   );
 }
