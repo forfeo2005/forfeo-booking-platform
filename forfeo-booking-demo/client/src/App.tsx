@@ -7,8 +7,10 @@ import { trpc } from "./utils/trpc";
 import { Toaster } from "@/components/ui/toaster";
 import superjson from "superjson";
 
-// Pages publiques
-import Home from "./pages/Home"; // ou "./Home" selon ton dossier
+// --- CORRECTION ICI : Import depuis la racine src ---
+import Home from "./Home"; 
+// ----------------------------------------------------
+
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import NotFound from "./pages/NotFound";
