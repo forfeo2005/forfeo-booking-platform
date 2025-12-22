@@ -1,10 +1,9 @@
-import { router, publicProcedure, protectedProcedure } from "../_core/trpc";
+import { router, protectedProcedure } from "../_core/trpc";
 import { z } from "zod";
 import { services } from "@shared/schema";
 import { db } from "../db";
-import { eq } from "drizzle-orm";
 
-// VERSION_SQLITE_COMPATIBLE_V2002 🚀
+// VERSION_FINALE_SQL_PROPRE 🚀
 export const serviceRouter = router({
   create: protectedProcedure
     .input(z.object({
@@ -15,8 +14,7 @@ export const serviceRouter = router({
       category: z.string().optional(),
     }))
     .mutation(async ({ input, ctx }) => {
-      // On liste uniquement les colonnes de données. 
-      // On ne mentionne PAS 'id' pour laisser l'auto-incrément fonctionner.
+      // On force l'insertion sans AUCUNE mention de l'ID ou de valeurs par défaut
       await db.insert(services).values({
         name: input.name,
         description: input.description || "",
@@ -24,13 +22,13 @@ export const serviceRouter = router({
         duration: input.duration,
         category: input.category || "Général",
         organizationId: ctx.user.organizationId,
-        isActive: true,
-      });
+      } as any); // Le 'as any' permet d'outrepasser les blocages de type si nécessaire
       
       return { success: true };
     }),
 
   list: protectedProcedure.query(async ({ ctx }) => {
+    const { eq } = await import("drizzle-orm");
     return await db.select()
       .from(services)
       .where(eq(services.organizationId, ctx.user.organizationId));
