@@ -1,7 +1,7 @@
 import { mysqlTable, serial, varchar, text, int, datetime, boolean, decimal } from "drizzle-orm/mysql-core";
 import { relations, sql } from "drizzle-orm";
 
-// 1. Table USERS (Déjà OK)
+// 1. Table USERS
 export const users = mysqlTable("users", {
   id: serial("id").primaryKey(),
   email: varchar("email", { length: 255 }).notNull().unique(),
@@ -12,7 +12,7 @@ export const users = mysqlTable("users", {
   updatedAt: datetime("updated_at").default(sql`CURRENT_TIMESTAMP`).$onUpdate(() => new Date()),
 });
 
-// 2. Table SESSIONS (Déjà OK)
+// 2. Table SESSIONS
 export const sessions = mysqlTable("sessions", {
   id: varchar("id", { length: 255 }).primaryKey(),
   userId: int("user_id").notNull(),
@@ -27,18 +27,26 @@ export const sessionsRelations = relations(sessions, ({ one }) => ({
   }),
 }));
 
-// 3. Table ORGANIZATIONS (C'est ici que ça plantait !)
+// 3. Table ORGANIZATIONS
 export const organizations = mysqlTable("organizations", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 255 }).notNull(),
   slug: varchar("slug", { length: 255 }).unique(),
   ownerId: int("owner_id"),
-  // CORRECTION : Ajout des timestamps pour éviter l'erreur de l'Image 3
   createdAt: datetime("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
   updatedAt: datetime("updated_at").default(sql`CURRENT_TIMESTAMP`).$onUpdate(() => new Date()),
 });
 
-// 4. Table SERVICES (On anticipe pour éviter un futur crash)
+// 4. Table MEMBERSHIPS (La pièce manquante !)
+export const memberships = mysqlTable("memberships", {
+  id: serial("id").primaryKey(),
+  userId: int("user_id").notNull(),
+  organizationId: int("org_id").notNull(),
+  role: varchar("role", { length: 50 }).notNull(), // ex: 'OWNER', 'MEMBER'
+  createdAt: datetime("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+});
+
+// 5. Table SERVICES
 export const services = mysqlTable("services", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 255 }).notNull(),
@@ -46,7 +54,6 @@ export const services = mysqlTable("services", {
   duration: int("duration"),
   organizationId: int("organization_id"),
   isActive: boolean("is_active").default(true),
-  // Ajout par sécurité
   createdAt: datetime("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
   updatedAt: datetime("updated_at").default(sql`CURRENT_TIMESTAMP`).$onUpdate(() => new Date()),
 });
