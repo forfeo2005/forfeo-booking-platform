@@ -20,8 +20,9 @@ export const authRouter = router({
       // On cherche l'utilisateur par email
       const [user] = await db.select().from(users).where(eq(users.email, input.email));
 
-      // Vérification simple (Pour la démo). En prod, on hacherait le mot de passe.
-      if (!user || user.password !== input.password) {
+      // CORRECTION: On vérifie le passwordHash (et non user.password)
+      // Note: Pour le moment on compare en texte clair. En prod, utilisez bcrypt.compare()
+      if (!user || user.passwordHash !== input.password) {
         throw new Error("Email ou mot de passe incorrect");
       }
 
@@ -30,7 +31,8 @@ export const authRouter = router({
         ctx.req.session.user = {
           id: user.id,
           email: user.email,
-          organizationId: user.organizationId,
+          // CORRECTION: organizationId n'est plus dans la table users, on met null ou on l'enlève
+          organizationId: null, 
           name: user.name
         };
         await ctx.req.session.save();

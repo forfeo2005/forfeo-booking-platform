@@ -1,13 +1,18 @@
 import type { CreateExpressContextOptions } from "@trpc/server/adapters/express";
-import { db } from "./db";
-import { getSessionFromRequest } from "./auth/session"; // Notre helper créé à l'étape 3
-import type { User } from "../../drizzle/schema";
+// CORRECTION : On remonte d'un cran pour trouver db
+import { db } from "../db";
+import { getSessionFromRequest } from "./auth/session";
+// CORRECTION : On pointe vers le bon schéma partagé
+import type { users } from "@shared/schema";
+
+// On utilise le type déduit de la table users
+type User = typeof users.$inferSelect;
 
 export type TrpcContext = {
   req: CreateExpressContextOptions["req"];
   res: CreateExpressContextOptions["res"];
   user: User | null;
-  orgId: number | null; // ID numérique maintenant (MySQL serial)
+  orgId: number | null;
   sessionId: string | null;
   db: typeof db;
 };
@@ -17,7 +22,7 @@ export async function createContext(
 ): Promise<TrpcContext> {
   const { req, res } = opts;
 
-  // Récupère la session depuis la DB via le cookie (cookie-parser doit être actif dans index.ts)
+  // Récupère la session depuis la DB via le cookie
   const sessionData = await getSessionFromRequest(req);
 
   return {
@@ -25,7 +30,7 @@ export async function createContext(
     res,
     db,
     user: sessionData ? sessionData.user : null,
-    // On attache l'ID de l'organisation active au contexte pour le filtrage multi-tenant
+    // On gère le cas où activeOrgId est null
     orgId: sessionData?.session.activeOrgId || null,
     sessionId: sessionData?.session.id || null,
   };
