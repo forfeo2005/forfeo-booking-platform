@@ -1,37 +1,47 @@
-import { mysqlTable, serial, varchar, int, text, timestamp } from "drizzle-orm/mysql-core";
+import { mysqlTable, serial, varchar, text, int, datetime, boolean, decimal } from "drizzle-orm/mysql-core";
 import { relations } from "drizzle-orm";
 
-// 1. Table des UTILISATEURS
+// 1. Table USERS (Utilisateurs)
 export const users = mysqlTable("users", {
   id: serial("id").primaryKey(),
   email: varchar("email", { length: 255 }).notNull().unique(),
-  password: varchar("password", { length: 255 }).notNull(),
+  passwordHash: varchar("password_hash", { length: 255 }).notNull(),
   name: varchar("name", { length: 255 }).notNull(),
-  organizationId: int("organization_id").notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
+  role: varchar("role", { length: 50 }).default("user").notNull(),
+  createdAt: datetime("created_at").default(new Date()).notNull(),
 });
 
-// 2. Table des ORGANISATIONS
+// 2. Table SESSIONS (Celle qui causait l'erreur rouge !)
+export const sessions = mysqlTable("sessions", {
+  id: varchar("id", { length: 255 }).primaryKey(),
+  userId: int("user_id").notNull(),
+  activeOrgId: int("active_org_id"), // La colonne qui manquait
+  expiresAt: datetime("expires_at").notNull(),
+});
+
+// Relations Sessions -> Users
+export const sessionsRelations = relations(sessions, ({ one }) => ({
+  user: one(users, {
+    fields: [sessions.userId],
+    references: [users.id],
+  }),
+}));
+
+// 3. Table ORGANIZATIONS
 export const organizations = mysqlTable("organizations", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 255 }).notNull(),
-  slug: varchar("slug", { length: 255 }).notNull().unique(),
+  slug: varchar("slug", { length: 255 }).unique(), // Vu dans tes logs
+  ownerId: int("owner_id"),
+  createdAt: datetime("created_at").default(new Date()),
 });
 
-// 3. Table des SERVICES (Mise à jour avec description)
+// 4. Table SERVICES (Vu dans tes logs)
 export const services = mysqlTable("services", {
-  id: serial("id").primaryKey(), // Assure l'AUTO_INCREMENT
+  id: serial("id").primaryKey(),
   name: varchar("name", { length: 255 }).notNull(),
-  description: text("description"), // Ajouté pour forcer la mise à jour
-  price: int("price").notNull(),
-  duration: int("duration").notNull(),
-  organizationId: int("organization_id").notNull(),
+  price: int("price"), // ou decimal selon ton choix
+  duration: int("duration"),
+  organizationId: int("organization_id"),
+  isActive: boolean("is_active").default(true),
 });
-
-// 4. Relations
-export const servicesRelations = relations(services, ({ one }) => ({
-  organization: one(organizations, {
-    fields: [services.organizationId],
-    references: [organizations.id],
-  }),
-}));
