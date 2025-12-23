@@ -7,7 +7,7 @@ import { randomBytes } from "crypto";
 const SESSION_COOKIE_NAME = "sid";
 const ONE_WEEK_MS = 1000 * 60 * 60 * 24 * 7;
 
-// --- 1. LECTURE (Ce qu'on a corrigé avant) ---
+// --- 1. LECTURE ---
 export async function getSessionFromRequest(req: Request) {
   const sessionId = req.cookies?.[SESSION_COOKIE_NAME] || req.headers["x-session-id"];
   
@@ -26,15 +26,23 @@ export async function getSessionFromRequest(req: Request) {
   return { session, user };
 }
 
-// --- 2. ÉCRITURE (Les fonctions qui manquaient pour le build !) ---
+// --- 2. ÉCRITURE (CORRIGÉE) ---
 
-export async function createSession(user: { id: number }) {
+// On accepte soit l'objet user, soit juste l'ID numérique
+export async function createSession(input: { id: number } | number) {
   const sessionId = randomBytes(32).toString("hex");
   const expiresAt = new Date(Date.now() + ONE_WEEK_MS);
 
+  // Détection intelligente : est-ce un nombre ou un objet ?
+  const userId = typeof input === "number" ? input : input.id;
+
+  if (!userId) {
+    throw new Error("Impossible de créer une session : ID utilisateur manquant");
+  }
+
   await db.insert(sessions).values({
     id: sessionId,
-    userId: user.id,
+    userId: userId, // On utilise l'ID sécurisé
     expiresAt: expiresAt,
     activeOrgId: null 
   });
@@ -52,7 +60,7 @@ export async function updateSessionOrg(sessionId: string, orgId: number) {
     .where(eq(sessions.id, sessionId));
 }
 
-// --- 3. COOKIES (Gestion du navigateur) ---
+// --- 3. COOKIES ---
 
 export function setSessionCookie(res: Response, sessionId: string) {
   res.cookie(SESSION_COOKIE_NAME, sessionId, {
