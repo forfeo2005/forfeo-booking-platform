@@ -1,19 +1,18 @@
-import { type Request } from "express";
+import { type Request, type Response } from "express";
 import { eq } from "drizzle-orm";
-import { db } from "../../db"; // On remonte de 2 crans : _core -> server -> db
+import { db } from "../../db";
 import { sessions, users } from "@shared/schema";
+import { randomBytes } from "crypto";
 
+const SESSION_COOKIE_NAME = "sid";
+const ONE_WEEK_MS = 1000 * 60 * 60 * 24 * 7;
+
+// --- 1. LECTURE (Ce qu'on a corrigé avant) ---
 export async function getSessionFromRequest(req: Request) {
-  // 1. On cherche le cookie de session (souvent nommé 'sid' ou 'connect.sid')
-  // Note: Assurez-vous d'avoir cookie-parser activé dans index.ts, sinon req.cookies sera vide
-  const sessionId = req.cookies?.sid || req.headers["x-session-id"];
+  const sessionId = req.cookies?.[SESSION_COOKIE_NAME] || req.headers["x-session-id"];
+  
+  if (!sessionId) return null;
 
-  if (!sessionId) {
-    return null;
-  }
-
-  // 2. LA REQUÊTE CORRIGÉE (MySQL)
-  // On joint la table sessions et users proprement
   const result = await db
     .select()
     .from(sessions)
@@ -21,11 +20,50 @@ export async function getSessionFromRequest(req: Request) {
     .where(eq(sessions.id, sessionId))
     .limit(1);
 
-  if (result.length === 0) {
-    return null;
-  }
+  if (result.length === 0) return null;
 
-  // 3. On retourne les données formatées
   const { sessions: session, users: user } = result[0];
   return { session, user };
+}
+
+// --- 2. ÉCRITURE (Les fonctions qui manquaient pour le build !) ---
+
+export async function createSession(user: { id: number }) {
+  const sessionId = randomBytes(32).toString("hex");
+  const expiresAt = new Date(Date.now() + ONE_WEEK_MS);
+
+  await db.insert(sessions).values({
+    id: sessionId,
+    userId: user.id,
+    expiresAt: expiresAt,
+    activeOrgId: null 
+  });
+
+  return sessionId;
+}
+
+export async function destroySession(sessionId: string) {
+  await db.delete(sessions).where(eq(sessions.id, sessionId));
+}
+
+export async function updateSessionOrg(sessionId: string, orgId: number) {
+  await db.update(sessions)
+    .set({ activeOrgId: orgId })
+    .where(eq(sessions.id, sessionId));
+}
+
+// --- 3. COOKIES (Gestion du navigateur) ---
+
+export function setSessionCookie(res: Response, sessionId: string) {
+  res.cookie(SESSION_COOKIE_NAME, sessionId, {
+    httpOnly: true,
+    path: "/",
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    expires: new Date(Date.now() + ONE_WEEK_MS),
+  });
+}
+
+export function clearSessionCookie(res: Response) {
+  res.clearCookie(SESSION_COOKIE_NAME, { path: "/" });
 }
