@@ -7,11 +7,12 @@ import { trpc } from "./utils/trpc";
 import superjson from "superjson";
 
 // Import Home depuis la racine src
-import Home from "./Home"; 
+import Home from "./Home";
 
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import NotFound from "./pages/NotFound";
+import PublicBooking from "./pages/PublicBooking"; // <--- AJOUT 1
 
 // Pages internes (Tableau de bord)
 import Dashboard from "./pages/Dashboard";
@@ -33,6 +34,9 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/login" component={Login} />
       <Route path="/signup" component={Signup} />
+      
+      {/* La fameuse route manquante ! */}
+      <Route path="/book/:slug" component={PublicBooking} /> {/* <--- AJOUT 2 */}
 
       {/* Routes Protégées */}
       <Route path="/dashboard"><Layout><Dashboard /></Layout></Route>
